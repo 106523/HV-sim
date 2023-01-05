@@ -1,0 +1,1 @@
+Images here are organized in frames, each is numbered, duration is 45 milliseconds.
