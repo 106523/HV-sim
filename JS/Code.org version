@@ -1,0 +1,669 @@
+//Must stay true(ish) to real life 
+//battery SOC calculations are in Watt Hours
+//Need to find out maximum braking capacity
+//Drag coefficent is that of a prius so it may be inaccurate
+//Torque is in NM
+//1MPH=130RPM for MG1
+//8.398:1 MG1 to wheel
+//everything needs to be highly modular as this thing is too compicated to be some monilith
+//Battery Max Draw is 100KW (assumption, no confrimation if this is true as of yet!!!) 
+//Power US handled in WATTS
+
+//TODO:
+//Get the overcomplicated hybrid control logic done
+//Get the engine lookup tables done
+//Deal with all of the white space
+//Stop the whole countershaft torque being negative when the speed is also negative
+//Find out the gear ratio of the engine to the wheels when the lock up clutch is engaged
+//Get the engine ECU done, with the correct engine operating line (Skip the HUGE lookup tabel and do something like MG1?
+//Review the battery power consumption thing for compatability with hybrid drive mode.
+//Extract all of the PNGs from the real cars infotainment and convert to GIF for use in power monitor
+
+
+//Ideas
+//transition to asynchronus to solve issues with timing?
+//Make a big a$$ list to act a "CAN Bus" to avoid memory leeks and reduce stack size. 
+//Should the ABS thingy just be a simple thing inside of the brake calculation system or should it be something else
+//Implement seperate ECU Logic for Engine drive mode (Torque Based), may be easier to calculate. Need to find specifics of wheel speed to engine speed with lockup clutch engaged
+
+//Notes
+//The torque calculations seem to be running faster than the Acceleration calculations
+//Is the torque curve of the electric motor exactly equivlant to the power curve? Does max HP stay constantonce peak torque is hit?
+//The accelerator pedal is now constant toruqe, pedal gets wonky at high speeds due to this and the drivetrain
+
+//Variables
+//Gearing
+var FinalDrive = 3.421;
+var MotorCountershaft = 2.47;
+//UI management
+var Ready;
+var EVModeStatus;
+var DebugUItext = "Debug:";
+var EVtoHVangle;
+var ClearLetOffX;
+var ClearLetOffY;
+//General Powertrain control
+var Speed;
+var SpeedHack;
+var SpeedBuffer;
+var SpeedHackMPH;
+var OverdriveClutch;
+var EngineDemandKW;
+var AcceleratorRaw;
+var TorqueDemand;
+var LowBattery;
+var Ohno;
+var HV_Status;
+var HVmodeOverride;
+var BypassHybridControl;
+var GlobalControlMode;
+var LocalControlMode;
+//Basic battery boilerplate
+var BatterySize = 17000;
+var BatteryMaxPowerDraw = 100000;
+var BatterySOC;
+var BatterySOCWH;
+//Program flow control
+var PowerState = 0;
+var HVmode = 0;
+var StepLastTime;
+var StepTime;
+var ErrorState = "";
+//Overcomplicated Brake Blending boilerplate
+//
+var BrakeAccelResetHack = 0;
+var BrakePedal;
+var BrakeDemand;
+var RegenAvalibleTorque;
+var RegenTorque;
+var RegenPowerSplit;
+var ABSinterventionStatus;
+var FrictionBrakeDemand;
+var MaxBrakeTorque = 1000;
+//Powertrain RPM Status
+var MG1RPM = 0;
+var EngineRPM;
+//Powertrain Torque/Power Variables
+var EVPriorityPower;
+var EVSecondaryPower;
+var MG1TorqueLimit;
+var EngineTorqueOutput;
+var EngineGeneration;
+var MG1TorqueOutput;
+var MG1Torque;
+var WheelTorque;
+var CountershaftTorque;
+var MG1Torque = 314;
+var WheelMaxPower;
+var PowerDemandKW;
+var BatterySOCWHBuffer;
+var PowerKW;
+var BatteryKW;
+var newtons;
+//Inefficiency 
+var BaseResistance = 200;
+var ResistanceExponental = 1;
+var Resistance;
+//Vehicle Weight/acceleration
+var VehicleWeight = 4059;
+var WeightKG = 1841;
+var TireRadius = 0.3429;
+var Acceleration;
+Speed = 0.00;
+
+//Hybrid controller peramaters
+var CS_Charge_Swing = 20;
+var Engine_Minimum_Power = 20;
+var CS_Charge_Remaining;
+var CS_EV_Priority_Power_Remaining;
+
+//Debug
+var TimingCounter = 0;
+var MG1TorqueLookupParm;
+var DebugEngineTorqueLookup;
+var ClutchLockup;
+var DebugEngineLoad;
+var DebugEngineBSFC;
+//Variable Descriptions
+//Speed - Self explanitory, the speed of the vehicle
+//MG1Torque - How much torque MG1 can output regardless of power avalibility
+//MG1TorqueLimit - How much torque MG1 can output taking into consideration power avalibility
+//MG1RPM - The RPM of MG1 (Main propulsion motor)
+//BaseResistance - The base resistance value (minimum rolling resistance of the tires)
+//ResistanceExponental - Controls how much the resistance goes up as the speed increses
+//Resistance - The ammount of resistance, calculated by adding base resistance and the resistance exponential
+//EngineRPM - The RPM of the engine
+//Acceleration - The acceleration value in m/s (I think)
+//newtons - How many newtons are pushing the car forward
+
+//Basic Function Descriptions
+//RegularLoop - Main program control loop used to keep everything running smoothly, needeed functions are usally called from here
+//InstantantiousAccelerationPoll - Used to calculate vehicle acceleration, used to modify vehicle speed
+//MasterPowertrainControl - Decides where, when, and how to allocate vehicle power to propulsion, regenerative braking is however done seperatly
+//WheelTorquePoll - The final torque that is actually being used to calculate acceleration
+//MG1RPMpoll - Calculates the RPM of MG1(Main propulsion motor), used to calculate vehicle torque demand, and primary power consumption outside of Engine Drive
+//RegenAvalibleTorquePoll - Used to calculate how much regenerative braking is possible, calculates realistic loss of effictiveness at low speeds
+//MainTorquePoll - Everything related to vehicular propulsion revolves around this, it takes the input from the accelerator pedal and turns it into something usable by the program
+//BrakeSplitPoll - Mainly used for debugging and UI purposes, simply calculates the split between the Regenerative brakes and the Friction brakes
+//RegenBrakePoll - Used to calculate how much regen and fiction brakes need to be done, checks if battery can accept charge and if VSA system is being used
+//PowerKWPoll - Converts the torque demand into KW, used for power management and power limiting, also calulates real power in KW. Used to calculate MG1 Torque limit
+//BatterySOCpoll - Used to calculate a battery readout in %, inaccurate for accuratly handling the calcuatons needed to ensure correct operation but usefull for things that dont need exact data
+//LowerLimitPoll - Used to switch from pure EV mode to HV mode, or EV to HV, also outputs flags used by the Master Powertrain Controller to change power-split operations to correct for low battery
+//MG1TorqueLimitPoll - Used to calculate limits of MG1 torque due to being in EV mode or an insufficent battery buffer nessecary for vehicle operation
+//DebugViewUpdate - Used to call the text adder for the debug panel and print text
+//AddText - Used to add text to the debug panel text var
+
+
+//MG1 Torque Calculating Function Descriptions
+//MG1TorqueLookup - Used to fetch the max torque values from a lookup table, each value is stored in intervals of 1000 RPM hence the need to smooth things out with some overcomplicated hacks
+//MG1TorqeSmoothBufferLookupHack - Absolutley horrible hack that just so happens to work, it looks up the next value in the lookup table and subtracts it from the previous torque.
+//MG1TorqueSmoothCompensate - Another hack that somehow works, this function  takes the truncated RPM and multiplies it, then subtracts it from the real RPM, used to calcuate the needed smoothness
+//MG1TorqueCalculate - The final hack, takes all the junk stuff calculated above and outputs a smoothened torque value 
+//MASTER TIMING CLOCK -- DO NOT TOUCH
+setInterval(function(){RegularLoop(); }, 1);
+//timedLoop(60, function() {
+//  RegularLoop();
+//});
+//MASTER TIMING CLOCK -- DO NOT TOUCH
+//Power button/Var Reset
+onEvent("StartButton", "click", function( ) {
+  if (PowerState == 0) {
+    PowerState = 1;
+    BatterySOCWH = BatterySize;
+    Ready = 1;
+  } else {
+    PowerState = 0;
+    Ready = 0;
+  }
+});
+AcceleratorRaw = getNumber("UglyAssAcceleratorSlider");
+//Main Program Loop
+function RegularLoop() {
+  if (ErrorState == "") {
+    BrakePedal = getNumber("UglyAssBrakeSlider");
+    AcceleratorRaw = getNumber("UglyAssAcceleratorSlider");
+    EVtoHVangle = getNumber("TemporarySlider");
+    RollingResistancePoll();
+    TorquePoll();
+    RegenAvalibleTorquePoll();
+    LowerLimitPoll();
+    BatterySOCpoll();
+    DebugViewUpdate();
+    PowerKWPoll();
+    Gaugeclusterupdate();
+    BatteryECU();
+  }
+}
+//Acceleration and Torque Loop
+function TorquePoll() {
+  StepRegulator();
+  MG1TorqueCalculate();
+  MainTorquePoll();
+  MasterPowertrainControl();
+  WheelTorquePoll();
+  InstantantiousAccelerationPoll();
+  AccelerationFinal();
+}
+
+//Make the godawful text thingy sane
+function AddText(AddTextInput) {
+  DebugUItext = DebugUItext + ("\n" + AddTextInput);
+}
+//Get the debug view stuff
+function DebugViewUpdate() {
+  AddText("RegenAvalibleTorque:" + Math.round(RegenAvalibleTorque) );
+  AddText("TorqueDemand:" + Math.round(TorqueDemand));
+  AddText("WheelTorque:" + WheelTorque);
+  AddText("MG1RPM: " + Math.round(MG1RPM));
+  AddText("Acceleration: " + Acceleration);
+  AddText("Newtons:" + Math.round(newtons));
+  AddText("Steptime:" + StepTime);
+  //AddText("SpeedBuffer:" + Math.round(SpeedBuffer));
+  AddText("Resistance:" + Math.round(Resistance));
+  AddText("PowerDemandKW:" + Math.round(PowerDemandKW));
+  AddText("MG1TorqueLimit:" + Math.round(MG1TorqueLimit));
+  AddText("CountershaftTorque:" + Math.round(CountershaftTorque));
+  AddText("PowerKW:" + PowerKW);
+  setText("Debug", DebugUItext);
+  DebugUItext = "Debug";
+}
+
+//Compensate for code.org being a POS
+StepLastTime = getTime();
+function StepRegulator() {
+  StepTime = getTime() - StepLastTime;
+  StepLastTime = getTime();
+}
+//DO NOT TOUCH THE STUFF BELOW
+
+//brain#### instantantious acceleration calculation
+function InstantantiousAccelerationPoll() {
+  //Calculating newton meter into newton
+  newtons = WheelTorque / TireRadius;
+  //Calculate Acceleration
+  Acceleration = newtons / WeightKG;
+}
+//DO NOT TOUCH THE STUFF ABOVE
+
+//Adding acceleration to current speed
+function AccelerationFinal() {
+  SpeedHack = Acceleration * StepTime/1000;
+  SpeedHackMPH = 2.23694 * SpeedHack;
+  SpeedBuffer = Speed + SpeedHackMPH;
+  Speed = Math.max(0, SpeedBuffer);
+}
+
+
+//Gauge Cluster
+function Gaugeclusterupdate() {
+  setText("Speedometer", Math.round(Speed));
+  //Call each drawing step
+  PowerLineDraw();
+  penUp();
+  PowerNeedleDraw();
+}
+//Draw the Power Meter
+//Draw Outer Blue Line (Only needs to be drawn once)
+penRGB(0, 42, 225);
+penUp();
+moveTo(160, 5);
+penDown();
+turnTo(270);
+arcLeft(90, 150);
+penUp();
+moveTo(160, 5);
+penDown();
+turnTo(90);
+arcRight(90, 150);
+penUp();
+//Draw the things that hide the errors in drawing
+penWidth(1);
+EVtoHVangle = 40;
+//Draw the inner Power Line thing
+function PowerLineDraw() {
+  //Draw the blue (EV) Power Area
+  penWidth(3);
+  penRGB(0, 42, 255);
+  moveTo(20, 155);
+  turnTo(0);
+  penDown();
+  arcRight(EVtoHVangle, 140);
+  //Clear area
+  ClearLetOffX = getX();
+  ClearLetOffY = getY();
+  penWidth(5);
+  penColor("black");
+  arcRight(180 - EVtoHVangle, 140);
+  penUp();
+  //Draw the white (HV) Power Area
+  penDown();
+  turnTo(EVtoHVangle);
+  penWidth(3);
+  moveTo(ClearLetOffX, ClearLetOffY);
+  penRGB(255, 255, 255);
+  arcRight(180 - EVtoHVangle, 140);
+  penUp();
+  //Draw the regen power area
+  moveTo(20, 155);
+  penRGB(0, 180, 0);
+  penDown();
+  arcLeft(30, 140);
+  penUp();
+  //Draw the thing that expands out for the regen power area
+  turnTo(180);
+  moveTo(20, 155);
+  penRGB(0, 180, 0);
+  penDown();
+  arcLeft(7, 140);
+  turnRight(45);
+  moveForward(10);
+  turnTo(173);
+  arcLeft(23, 140);
+  turnLeft(90);
+  moveForward(9);
+  moveBackward(6);
+  turnLeft(90);
+  arcRight(23, 140);
+  turnRight(90);
+  moveForward(3);
+  turnRight(90);
+  arcLeft(22, 140);
+  penUp();
+  //Draw the blue power thing
+  penRGB(0, 42, 225);
+  penUp();
+  moveTo(160, 5);
+  penDown();
+  turnTo(270);
+  arcLeft(90, 150);
+  penUp();
+  moveTo(160, 5);
+  penDown();
+  turnTo(90);
+  arcRight(90, 150);
+  penUp();
+  //Draw the thing that hides the drawing errors
+  moveTo(0, 155);
+  penRGB(80, 80, 80);
+  penWidth(5);
+  penDown();
+  move(50, 0);
+  penUp();
+  moveTo(270, 155);
+  penDown();
+  move(50, 0);
+  penUp();
+}
+//Draw the power needle
+function PowerNeedleDraw() {
+  //Blanking Interval
+  penRGB(0, 0, 0);
+  penWidth(12);
+  moveTo(5, 155);
+  turnTo(0);
+  penDown();
+  arcRight(180, 155);
+  penUp();
+  moveTo(5, 155);
+  turnTo(180);
+  penDown();
+  arcLeft(180, 155);
+  penUp();
+  //Draw the power needle
+  penRGB(120, 180, 200);
+  penWidth(3);
+  moveTo(5, 155);
+  turnTo(0);
+  penDown();
+  if (PowerKW * (180 / 130) <= 0) {
+    turnTo(180);
+    arcLeft(Math.abs(PowerKW) * (30 / 130), 155);
+  } else {
+    arcRight(PowerKW * (180 / 130), 155);
+    turnRight(90);
+    moveForward(5);
+  }
+  penUp();
+  //Draw the thing that hides the drawing errors
+  moveTo(0, 155);
+  penRGB(80, 80, 80);
+  penWidth(5);
+  penDown();
+  move(50, 0);
+  penUp();
+  moveTo(270, 155);
+  penDown();
+  move(50, 0);
+  penUp();
+  
+}
+
+
+//STAY AWAY!!!
+//WARNING! THE STUFF BELOW HERE GETS REALLY HORRIBLE AND WORKS POROPERLY, DONT SCREW IT UP !WARNING! 
+//WARNING! THE STUFF BELOW HERE GETS REALLY HORRIBLE AND WORKS POROPERLY, DONT SCREW IT UP !WARNING! 
+//WARNING! THE STUFF BELOW HERE GETS REALLY HORRIBLE AND WORKS POROPERLY, DONT SCREW IT UP !WARNING! 
+//Regen Torque Calculation
+function RegenAvalibleTorquePoll() {
+  //THIS IS ALSO A GODAWFUL BROKEN HACK I HOPE IT WORKS
+  RegenAvalibleTorque = Math.max(0, MG1Torque - 350 / (MG1RPM / 500));
+}
+function WheelTorquePoll() {
+  //Overall Toruqe output
+  CountershaftTorque = MG1TorqueOutput + EngineTorqueOutput;
+  //Countershaft Torque to Wheel Torque
+  WheelTorque = Math.round(((CountershaftTorque + FrictionBrakeDemand * -1) * (FinalDrive * MotorCountershaft))- Resistance);
+  TimingCounter = TimingCounter + 1;
+}
+
+//Accelerator Pedal to Torque
+function MainTorquePoll() {
+  TorqueDemand = MG1Torque * (AcceleratorRaw / 100);
+}
+
+//MG1 Torque calculation
+function MG1TorqueCalculate() {
+  //MG1 RPM Calculation
+  MG1RPM = Speed * 130;
+  //Calculate MG1 Torque limit
+  if (314 >= (9.5488 * (EngineGeneration + BatteryMaxPowerDraw)) / MG1RPM) {
+    MG1TorqueLimit = (9.5488 * (EngineGeneration + BatteryMaxPowerDraw)) / MG1RPM;
+  } else {
+    MG1TorqueLimit = 314;
+  }
+  if (314 >= (9.5488 * 134972) / MG1RPM) {
+    MG1Torque = (9.5488 * 134972) / MG1RPM;
+  } else {
+    MG1Torque = 314;
+  }
+
+  }
+//WARNING! THE STUFF ABOVE HERE GETS REALLY HORRIBLE AND WORKS POROPERLY, DONT SCREW IT UP !WARNING! 
+//WARNING! THE STUFF ABOVE HERE GETS REALLY HORRIBLE AND WORKS POROPERLY, DONT SCREW IT UP !WARNING! 
+//WARNING! THE STUFF ABOVE HERE GETS REALLY HORRIBLE AND WORKS POROPERLY, DONT SCREW IT UP !WARNING! 
+
+//Energy Monitor Thing
+//Operating_Mode 0 = All engines stop
+//Operating_Mode 1 = Regenerative Braking
+//Operating_Mode 2 = EV Drive
+//Operating_Mode 3 = Engine Standby
+//Operating_Mode 4 = All engines active, clutch decoupled, engine and battery feed power to MG1
+//Operating_Mode 5 = Engine driveing wheels, no generation, MG1 standby, clutch engaged
+//Operating_Mode 6 = Engine generating power MG1, High voltage batery in standby
+//Operating_Mode 7 = Engine generating power for MG1, Battery being charged by energy surplus from MG2
+
+function Energy_Monitor_Draw(Operating_Mode) {
+  if (Operating_Mode == 0) {
+    hideElement("EngineOnImg");
+    hideElement("EngineDrive1");
+    hideElement("MotorDrive");
+    hideElement("HybridDrive1");
+    showElement("EngineOffImg");
+  } else if ((Operating_Mode == 1)) {
+    hideElement("EngineOnImg");
+    hideElement("EngineDrive1");
+    hideElement("MotorDrive");
+    hideElement("HybridDrive1");
+    showElement("EngineOffImg");
+  } else if ((Operating_Mode == 2)) {
+    hideElement("EngineOnImg");
+    hideElement("HybridDrive1");
+    hideElement("EngineDrive1");
+    showElement("EngineOffImg");
+    showElement("MotorDrive");
+  } else {
+    
+  }
+}
+
+//Rolling resistance calculate
+function RollingResistancePoll() {
+  if (Speed >= 0.1) {
+    //very very unrealistic way of calculating resistance, but it does provide SOMETHING./
+    Resistance = BaseResistance + Math.pow(Speed, ResistanceExponental);
+  } else {
+    Resistance = 0;
+  }
+}
+
+
+//Stupid Math SOC Calculations
+function BatterySOCpoll() {
+  BatterySOC = BatterySOCWH / 170;
+}
+//Godawful Battery SOC lower limit compensation
+//Should be intigrated into master powertrain controller
+function LowerLimitPoll() {
+  if (30 > BatterySOC) {
+    if (20 > BatterySOC) {
+      if (15 > BatterySOC) {
+        //Either power management screwed up or your driving like a damn maniac!
+        Ohno = 1;
+        LowBattery = 1;
+        //TIME TO REV THE ENGINE!!!!!!!!
+      } else {
+        Ohno = 0;
+        LowBattery = 1;
+      }
+    } else {
+      Ohno = 0;
+      LowBattery = 0;
+    }
+    HVmode = 1;
+  } else {
+    if (HVmodeOverride == 1) {
+      HVmode = 1;
+    } else {
+      HVmode = 0;
+      BypassHybridControl = 1;
+      EVModeStatus = 1;
+    }
+    LowBattery = 0;
+    Ohno = 0;
+  }
+}
+//MAIN POWERTRAIN CONTROL
+function MasterPowertrainControl() {
+  //Brake Override and switchover
+  if (BrakePedal > 0 && 0 < Speed) {
+    //Brake Pedal to Brake Demand
+  BrakeDemand = MaxBrakeTorque * (BrakePedal / 100);
+  //Check for ABS intervention
+  if (ABSinterventionStatus == 0) {
+    //Check if Battery can accept regen
+    //Check if Regen can meet BrakeDemand
+    //THIS AREA IS A LITTLE FUCKY WUCKY, WILL FIX LATER.
+    if (BatterySize >= BatterySOCWH && BrakeDemand <= RegenAvalibleTorque) {
+      RegenTorque = BrakeDemand;
+      FrictionBrakeDemand = 0;
+      Energy_Monitor_Draw(1);
+    } else if ((BatterySize >= BatterySOCWH && BrakeDemand > RegenAvalibleTorque)) {
+      RegenTorque = RegenAvalibleTorque;
+      FrictionBrakeDemand = BrakeDemand - RegenAvalibleTorque;
+    } else {
+      RegenTorque = 0;
+      FrictionBrakeDemand = BrakeDemand;
+    }
+  } else {
+    //ABS logic? NAH
+    //Set Regen Torque to 0
+    RegenTorque = 0;
+    //Friction brakes do all of the braking
+    FrictionBrakeDemand = BrakeDemand;
+    Energy_Monitor_Draw(0);
+  }
+  //Make brake split readable by humans
+  RegenPowerSplit = RegenTorque / FrictionBrakeDemand;
+    MG1TorqueOutput = RegenTorque * -1;
+    BrakeAccelResetHack = 1;
+  } else {
+    //Reset the brakes
+    if (BrakeAccelResetHack == 1) {
+      FrictionBrakeDemand = 0;
+      RegenTorque = 0;
+      BrakeAccelResetHack = 0;
+    }
+    //Initial check to determine correct operating mode
+    //Call the Engine ECU at the end of the decision tree to keep it up to date sooner insted of 1 cycle later
+    if (HVmode == 1) {
+      //Hybrid Vehicle Mode
+      //Check to see if engine will be in emergency power mode
+      if (Ohno == 1) {
+        //Emergency engine generation mode (Engine always at max power)
+        //This is kind of a joke.
+        EVtoHVangle = 0;
+        EngineDemandKW = 76.8;
+        OverdriveClutch = 0;
+        EngineGeneration = EngineDemandKW;
+        EngineECU();
+      } else {
+        //Regular hybrid driving 
+        //Check if requested power is in the EV priority range (Calculated with *MAGIC*)
+        if (PowerDemandKW >= EVPriorityPower) {
+          EVMode();
+        }
+      }
+    } else {
+      //Call ev mode
+      EVMode();
+      //Draw the EVtoHVangle thing
+      EVtoHVangle = 138.461538462;
+      
+    }
+  }
+}
+//EVMode
+function EVMode() {
+  //Pure EV Mode
+  //Dont call the engine ECU to save resources
+  if (AcceleratorRaw == 0) {
+    Energy_Monitor_Draw(0);
+  } else {
+    Energy_Monitor_Draw(2);
+  }
+  EngineTorqueOutput = 0;
+  EngineGeneration = 0;
+  EngineRPM = 0;
+  if (TorqueDemand >= Math.abs(MG1TorqueLimit)) {
+      MG1TorqueOutput = MG1TorqueLimit;
+    } else {
+      MG1TorqueOutput = TorqueDemand;
+    }
+}
+//Engine ECU 
+function EngineECU() {
+  if (OverdriveClutch == 0) {
+    //KW Generation optimal BSFC Calculate
+  } else {
+    //Torque Demand based calculator
+  }
+}
+//Battery Charge controller
+BatterySOCWH = 9000;
+function BatteryECU() {
+  BatterySOCWHBuffer = (PowerKW * 1000) * StepTime/3600000;
+  BatterySOCWH = BatterySOCWH - BatterySOCWHBuffer;
+  if (BatterySOCWH<0) {
+    ErrorState = "HALT_AND_CATCH_FIRE";
+    ErrorHandler("HALT_AND_CATCH_FIRE");
+  }
+}
+//Error Handler
+function ErrorHandler(Error) {
+  if (Error == "HALT_AND_CATCH_FIRE") {
+    showElement("image1");
+    //Explosions
+    showElement("Explosion3");
+    showElement("Explosion2");
+    showElement("Explosion1");
+    Speed = "ERROR";
+    setText("Speedometer", "ERROR");
+    //Draw junk
+    penDown();
+    timedLoop(1, function() {
+      for (var i = 0; i < 4; i++) {
+        penRGB(randomNumber(1, 255), randomNumber(1, 255), randomNumber(1, 255));
+        moveForward(randomNumber(1, 100));
+        turnTo(randomNumber(1, 360));
+      }
+      moveTo(randomNumber(1, 320), randomNumber(1, 450));
+      setSize("Speedometer", randomNumber(1, 300), randomNumber(1, 100));
+      setSize("Debug", randomNumber(1, 100), randomNumber(1, 200));
+      setSize("MPHtext", randomNumber(1, 150), randomNumber(1, 100));
+      setPosition("image1", randomNumber(1, 320), randomNumber(1, 450), 100, 100);
+    });
+  }
+}
+
+function PowerKWPoll() {
+  //Caclulate actual power KW
+  PowerKW = (CountershaftTorque * MG1RPM) / 9.5488 / 1000 + EngineGeneration;
+  //Calculate Power Demand KW
+  PowerDemandKW = (TorqueDemand * MG1RPM) / 9.5488 / 1000;
+  //Calculate max wheel power (Soon to be depreciated)
+  WheelMaxPower = (314 * MG1RPM) / 9.5488 / 1000;
+}
+//Regen Cooperative Brake control
+ABSinterventionStatus = 0;
+BatterySOCWH = 16999;
+FrictionBrakeDemand = 0;
