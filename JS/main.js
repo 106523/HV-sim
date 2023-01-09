@@ -1,15 +1,10 @@
-var StepTime
-var StepLastTime = getTime();
 
-
-
+let lastTimestamp = 0; // Outside of the function wrapping the code below
+   //
 
 setInterval(function(){RegularLoop(); }, 1);
-
 function RegularLoop() {
-  //Calculate the step time to compensate for lag/slowdowns
-  StepTime = getTime() - StepLastTime;
-  StepLastTime = getTime();
-  
-  
+  const timestamp = Math.max(Math.round(Date.now() / 1000), lastTimestamp + 1);
+lastTimestamp = timestamp;
+console.log(timestamp)
 }
