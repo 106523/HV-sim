@@ -1,10 +1,13 @@
-
-let lastTimestamp = 0; // Outside of the function wrapping the code below
-   //
+let lastTimestamp = 0; 
+var StepTime 
+var StepLastTime 
 
 setInterval(function(){RegularLoop(); }, 1);
 function RegularLoop() {
-  const timestamp = Math.max(Math.round(Date.now() / 1000), lastTimestamp + 1);
-lastTimestamp = timestamp;
-console.log(timestamp)
+  const timestamp = (Date.now());
+  console.log(StepTime)
+  console.log(timestamp)
+  console.log(lastTimestamp)
+  StepTime = timestamp-lastTimestamp
+  lastTimestamp = timestamp;
 }
