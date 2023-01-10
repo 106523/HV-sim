@@ -22,7 +22,7 @@ function Main() {
 }
 //prototype HTML text adder
 function AddText(AddTextInput) {
-  let DebugUItext
+  let DebugUItext = "Debug";
   DebugUItext = DebugUItext + ("\n" + AddTextInput);
   return DebugUItext
 }
