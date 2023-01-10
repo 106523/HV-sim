@@ -14,7 +14,8 @@ setInterval(function(){Main(); }, 1);
 function Main() {
   // const timestamp = Date.now();
   //checks how long each step is so the program can compensate for execution speeds
-  console.log(StepTime)
   StepTime = Date.now()-lastTimestamp
   lastTimestamp = Date.now();
+  //prototype, prints to #header
+  document.querySelector('#header').innerHTML = StepTime
 }
