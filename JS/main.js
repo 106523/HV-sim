@@ -17,5 +17,12 @@ function Main() {
   StepTime = Date.now()-lastTimestamp
   lastTimestamp = Date.now();
   //prototype, prints to #header
-  document.querySelector('#header').innerHTML = StepTime
+  document.querySelector('#header').innerHTML = AddText("Steptime:" + StepTime);
+  //prototype debug section
+}
+//prototype HTML text adder
+function AddText(AddTextInput) {
+  let DebugUItext
+  DebugUItext = DebugUItext + ("\n" + AddTextInput);
+  return DebugUItext
 }
