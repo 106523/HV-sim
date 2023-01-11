@@ -1,5 +1,6 @@
 //variables the main function will be dealing (eg. speed) with NEED to be global. 
-
+//Perhaps I will optimise the debug ui text thing, make it NON global, just easier to use a global for now.
+var DebugUItext
 //powertrain variables
 var speed = 0;
 //Resistance variables
