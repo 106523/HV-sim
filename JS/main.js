@@ -13,13 +13,17 @@ var StepLastTime
 
 setInterval(function(){Main(); }, 1);
 function Main() {
+  //grab some basic input
+  let AcceleratorRaw = document.getElementById("Accelerator");
   // const timestamp = Date.now();
   //checks how long each step is so the program can compensate for execution speeds
   StepTime = Date.now()-lastTimestamp
   lastTimestamp = Date.now();
   //prototype, prints to #header
+  DebugText("AcceleratorRaw:" + AcceleratorRaw.value, 0);
   DebugText("Steptime:" + StepTime, 1);
-  //prototype debug section
+  //Get accelerator slider value
+  
 }
 //prototype HTML text adder
 function DebugText(TextInput, Flush) {
