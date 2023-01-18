@@ -34,3 +34,21 @@ function DebugText(TextInput, Flush) {
     DebugUItext = ""
   }
 }
+
+//EV drive mode
+function EVMode(TorqueDemand, MG1TorqueLimit) {
+  //Pure EV Mode
+  //Dont call the engine ECU to save resources
+  
+  let EngineTorqueOutput = 0;
+  let EngineGeneration = 0;
+  let EngineRPM = 0;
+  if (TorqueDemand >= Math.abs(MG1TorqueLimit)) {
+      MG1TorqueOutput = MG1TorqueLimit;
+    } else {
+      MG1TorqueOutput = TorqueDemand;
+    }
+  return MG1TorqueOutput;
+  return EngineRPM;
+  return EngineGeneration;
+}
