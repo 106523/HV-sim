@@ -23,6 +23,14 @@ function Main() {
   //prototype, prints to #header
   DebugText("AcceleratorRaw:" + AcceleratorRaw.value, 0);
   DebugText("Steptime:" + StepTime, 1);
+  //rewrite the whole brake handling/mode select
+  if(BrakePedal > 0){
+    let MaxBrakeTorque = 1000;
+    let BrakeDemand = MaxBrakeTorque * (BrakePedal / 100);
+    //call the whole brake handler thingy
+  } else {
+    
+  }
   
   
 }
@@ -39,7 +47,6 @@ function DebugText(TextInput, Flush) {
 function EVMode(TorqueDemand, MG1TorqueLimit) {
   //Pure EV Mode
   //Dont call the engine ECU to save resources
-  
   let EngineTorqueOutput = 0;
   let EngineGeneration = 0;
   let EngineRPM = 0;
