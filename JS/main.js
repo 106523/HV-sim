@@ -1,6 +1,7 @@
 //variables the main function will be dealing (eg. speed) with NEED to be global. 
 //Perhaps I will optimise the debug ui text thing, make it NON global, just easier to use a global for now.
-//might be a good idea to just send the vars spitted out by the torque calculate module to bypass having some vars just floating around in the HV/EV controller. 
+//okay so the whole AP thing needs some lists, perhaps I could make some "CAN bus" like system, will need to have some decoder rings
+
 var DebugUItext
 //powertrain variables
 var speed = 0;
