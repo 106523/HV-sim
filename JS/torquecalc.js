@@ -5,26 +5,14 @@
 
 
 
-
+//when main torque poll is run it should run the MG1 torque calculation as well.
 //Accelerator Pedal to Torque
 function MainTorquePoll() {
-  TorqueDemand = MG1Torque * (AcceleratorRaw / 100);
-}
-
-//Lots of independent functions, will be combined into a more efficent blob at some point
-function WheelTorquePoll() {
-  //Overall Toruqe output
-  CountershaftTorque = MG1TorqueOutput + EngineTorqueOutput;
-  //Countershaft Torque to Wheel Torque
-  WheelTorque = Math.round(((CountershaftTorque + FrictionBrakeDemand * -1) * (FinalDrive * MotorCountershaft))- Resistance);
-  TimingCounter = TimingCounter + 1;
-}
-
-//MG1 Torque calculation
-function MG1TorqueCalculate() {
   //MG1 RPM Calculation
   MG1RPM = Speed * 130;
+  //MG1 Torque calculation
   //Calculate MG1 Torque limit
+  //why the fuck did I have a seperate KW calculator again if this does the same thing?!
   if (314 >= (9.5488 * (EngineGeneration + BatteryMaxPowerDraw)) / MG1RPM) {
     MG1TorqueLimit = (9.5488 * (EngineGeneration + BatteryMaxPowerDraw)) / MG1RPM;
   } else {
@@ -35,8 +23,21 @@ function MG1TorqueCalculate() {
   } else {
     MG1Torque = 314;
   }
+  TorqueDemand = MG1Torque * (AcceleratorRaw / 100);
 }
 
+//Lots of independent functions, will be combined into a more efficent blob at some point
+//might feed some vars right up the asshole of this function, or I might just use a list.
+function WheelTorquePoll() {
+  //Overall Toruqe output
+  CountershaftTorque = MG1TorqueOutput + EngineTorqueOutput;
+  //Countershaft Torque to Wheel Torque
+  WheelTorque = Math.round(((CountershaftTorque + FrictionBrakeDemand * -1) * (FinalDrive * MotorCountershaft))- Resistance);
+}
+
+
+
+//should be faster to keep the regen torque calculate subsystem seperate from the main MG1 torque calculator
 //Regen Torque Calculation
 function RegenAvalibleTorquePoll() {
   //THIS IS ALSO A GODAWFUL BROKEN HACK I HOPE IT WORKS

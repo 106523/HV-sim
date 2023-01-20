@@ -5,7 +5,10 @@ var F_CAN = [
   "Speed:",
   "AcceleratorRaw:",
   "BrakePedal:",
-  "BrakeDemand:"
+  "BrakeDemand:",
+  "MG1TorqueLimit;",
+  "TorqueDemand:",
+  "MG1TorqueOutput:"
 
 ];
 var DebugUItext
@@ -50,7 +53,7 @@ function DebugText(TextInput, Flush) {
     DebugUItext = ""
   }
 }
-
+//Shifting around a fuck ton of variablres from function to function MIGHT not be the best idea. 
 //EV drive mode
 function EVMode(TorqueDemand, MG1TorqueLimit) {
   //Pure EV Mode
