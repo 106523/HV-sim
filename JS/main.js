@@ -9,7 +9,8 @@ var F_CAN = [
   "4_MG1TorqueLimit;",
   "5_TorqueDemand:",
   "6_MG1TorqueOutput:",
-  "7_WheelTorque:"
+  "7_WheelTorque:",
+  "8_StepTime:"
 
 ];
 var DebugUItext
