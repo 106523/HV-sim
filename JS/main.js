@@ -2,13 +2,14 @@
 //Perhaps I will optimise the debug ui text thing, make it NON global, just easier to use a global for now.
 //okay so the whole AP thing needs some lists, perhaps I could make some "CAN bus" like system, will need to have some decoder rings
 var F_CAN = [
-  "Speed:",
-  "AcceleratorRaw:",
-  "BrakePedal:",
-  "BrakeDemand:",
-  "MG1TorqueLimit;",
-  "TorqueDemand:",
-  "MG1TorqueOutput:"
+  "0_Speed:",
+  "1_AcceleratorRaw:",
+  "2_BrakePedal:",
+  "3_BrakeDemand:",
+  "4_MG1TorqueLimit;",
+  "5_TorqueDemand:",
+  "6_MG1TorqueOutput:",
+  "7_WheelTorque:"
 
 ];
 var DebugUItext
