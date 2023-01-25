@@ -9,30 +9,30 @@
 //Accelerator Pedal to Torque
 function MainTorquePoll() {
   //MG1 RPM Calculation
-  MG1RPM = Speed * 130;
+  F_CAN[9] = F_CAN[0] * 130;
   //MG1 Torque calculation
   //Calculate MG1 Torque limit
   //why the fuck did I have a seperate KW calculator again if this does the same thing?!
   if (314 >= (9.5488 * (EngineGeneration + BatteryMaxPowerDraw)) / MG1RPM) {
-    MG1TorqueLimit = (9.5488 * (EngineGeneration + BatteryMaxPowerDraw)) / MG1RPM;
+    F_CAN[4] = (9.5488 * (EngineGeneration + BatteryMaxPowerDraw)) / MG1RPM;
   } else {
-    MG1TorqueLimit = 314;
+    F_CAN[4] = 314;
   }
   if (314 >= (9.5488 * 134972) / MG1RPM) {
-    MG1Torque = (9.5488 * 134972) / MG1RPM;
+    let MG1Torque = (9.5488 * 134972) / MG1RPM;
   } else {
-    MG1Torque = 314;
+    let MG1Torque = 314;
   }
-  TorqueDemand = MG1Torque * (AcceleratorRaw / 100);
+  F_CAN[5] = MG1Torque * (AcceleratorRaw / 100);
 }
 
 //Lots of independent functions, will be combined into a more efficent blob at some point
 //might feed some vars right up the asshole of this function, or I might just use a list.
 function WheelTorquePoll() {
   //Overall Toruqe output
-  CountershaftTorque = MG1TorqueOutput + EngineTorqueOutput;
+  let CountershaftTorque = F_CAN[6] + EngineTorqueOutput;
   //Countershaft Torque to Wheel Torque
-  WheelTorque = Math.round(((CountershaftTorque + FrictionBrakeDemand * -1) * (FinalDrive * MotorCountershaft))- Resistance);
+  F_CAN[7] = Math.round(((CountershaftTorque + FrictionBrakeDemand * -1) * (FinalDrive * MotorCountershaft))- Resistance);
 }
 
 

@@ -10,7 +10,9 @@ var F_CAN = [
   "5_TorqueDemand:",
   "6_MG1TorqueOutput:",
   "7_WheelTorque:",
-  "8_StepTime:"
+  "8_StepTime:",
+  "9_MG1RPM:",
+  
 
 ];
 var DebugUItext
@@ -21,7 +23,6 @@ var BaseResistance = 200;
 var ResistanceExponental = 1;
 //Timer variables
 let lastTimestamp = 0; 
-var StepTime 
 var StepLastTime 
 
 setInterval(function(){Main(); }, 1);
@@ -31,7 +32,7 @@ function Main() {
   let AcceleratorRaw = document.getElementById("Accelerator");
   // const timestamp = Date.now();
   //checks how long each step is so the program can compensate for execution speeds
-  StepTime = Date.now()-lastTimestamp
+  F_CAN[8] = Date.now()-lastTimestamp
   lastTimestamp = Date.now();
   //prototype, prints to #header
   DebugText("AcceleratorRaw:" + AcceleratorRaw.value, 0);
