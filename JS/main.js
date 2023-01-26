@@ -3,7 +3,7 @@
 //okay so the whole AP thing needs some lists, perhaps I could make some "CAN bus" like system, will need to have some decoder rings
 var F_CAN = [
   "0_Speed:",
-  "1_HVSOC",
+  "1_RegenAvalibleTorque:",
   "2_BrakePedal:",
   "3_BrakeDemand:",
   "4_MG1TorqueLimit;",
@@ -14,7 +14,9 @@ var F_CAN = [
   "9_MG1RPM:",
   "10_EngineGeneration:",
   "11_EngineTorqueOutput:",
-  "12_EngineRPM:"
+  "12_EngineRPM:",
+  "13_FrictionBrakeDemand:",
+  "14_HVSOC:",
   
 
 ];
@@ -71,5 +73,4 @@ function EVMode(TorqueDemand) {
     } else {
       F_CAN[6] = TorqueDemand;
     }
-  return EngineGeneration;
 }

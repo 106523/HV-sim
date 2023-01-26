@@ -13,6 +13,7 @@ function MainTorquePoll(AcceleratorRaw) {
   //MG1 Torque calculation
   //Calculate MG1 Torque limit
   //why the fuck did I have a seperate KW calculator again if this does the same thing?!
+  //could use some math.min thing here isnted of an if statement
   if (314 >= (9.5488 * (EngineGeneration + BatteryMaxPowerDraw)) / MG1RPM) {
     F_CAN[4] = (9.5488 * (EngineGeneration + BatteryMaxPowerDraw)) / MG1RPM;
   } else {
@@ -42,7 +43,7 @@ function WheelTorquePoll() {
 //Regen Torque Calculation
 function RegenAvalibleTorquePoll() {
   //THIS IS ALSO A GODAWFUL BROKEN HACK I HOPE IT WORKS
-  RegenAvalibleTorque = Math.max(0, MG1Torque - 350 / (MG1RPM / 500));
+  F_CAN[1] = Math.max(0, MG1Torque - 350 / (MG1RPM / 500));
 }
 
 //engine ecu code here
