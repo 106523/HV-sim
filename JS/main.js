@@ -3,7 +3,7 @@
 //okay so the whole AP thing needs some lists, perhaps I could make some "CAN bus" like system, will need to have some decoder rings
 var F_CAN = [
   "0_Speed:",
-  "1_AcceleratorRaw:",
+  "1_HVSOC",
   "2_BrakePedal:",
   "3_BrakeDemand:",
   "4_MG1TorqueLimit;",
@@ -12,12 +12,15 @@ var F_CAN = [
   "7_WheelTorque:",
   "8_StepTime:",
   "9_MG1RPM:",
+  "10_EngineGeneration:",
+  "11_EngineTorqueOutput:",
+  "12_EngineRPM:"
   
 
 ];
 var DebugUItext
 //powertrain variables
-var speed = 0;
+F_CAN[0] = 0;
 //Resistance variables
 var BaseResistance = 200;
 var ResistanceExponental = 1;
@@ -29,24 +32,22 @@ setInterval(function(){Main(); }, 1);
 function Main() {
   //grab some basic input
   //get accelerator slider value
-  let AcceleratorRaw = document.getElementById("Accelerator");
+  F_CAN[5] = MainTorquePoll(document.getElementById("Accelerator"));
   // const timestamp = Date.now();
   //checks how long each step is so the program can compensate for execution speeds
-  F_CAN[8] = Date.now()-lastTimestamp
+  F_CAN[8] = Date.now()-lastTimestamp;
   lastTimestamp = Date.now();
   //prototype, prints to #header
-  DebugText("AcceleratorRaw:" + AcceleratorRaw.value, 0);
-  DebugText("Steptime:" + StepTime, 1);
+  DebugText("AcceleratorRaw:" + F_CAN[1].value, 0);
+  DebugText("Steptime:" + F_CAN[8], 1);
   //rewrite the whole brake handling/mode select
   if(BrakePedal > 0){
     let MaxBrakeTorque = 1000;
-    let BrakeDemand = MaxBrakeTorque * (BrakePedal / 100);
+    F_CAN[3] = MaxBrakeTorque * (BrakePedal / 100);
     //call the whole brake handler thingy
   } else {
     
   }
-  
-  
 }
 //prototype HTML text adder
 function DebugText(TextInput, Flush) {
@@ -56,21 +57,19 @@ function DebugText(TextInput, Flush) {
     DebugUItext = ""
   }
 }
-//Shifting around a fuck ton of variablres from function to function MIGHT not be the best idea. 
 //EV drive mode
-function EVMode(TorqueDemand, MG1TorqueLimit) {
+function EVMode(TorqueDemand) {
   //Pure EV Mode
   //Dont call the engine ECU to save resources
-  let EngineTorqueOutput = 0;
-  let EngineGeneration = 0;
-  let EngineRPM = 0;
+  //let everything else know the engine isnt doing shit
+  F_CAN[12] = 0;
+  F_CAN[11] = 0;
+  F_CAN[10] = 0;
   //why the FUCK did I make MG1Torquelimit an absolute? Did it ever go into the NEGATIVE range for god knows what reason?!
-  if (TorqueDemand >= Math.abs(MG1TorqueLimit)) {
-      MG1TorqueOutput = MG1TorqueLimit;
+  if (TorqueDemand >= Math.abs(F_CAN[4])) {
+      F_CAN[6] = F_CAN[4];
     } else {
-      MG1TorqueOutput = TorqueDemand;
+      F_CAN[6] = TorqueDemand;
     }
-  return MG1TorqueOutput;
-  return EngineRPM;
   return EngineGeneration;
 }

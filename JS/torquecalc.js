@@ -7,7 +7,7 @@
 
 //when main torque poll is run it should run the MG1 torque calculation as well.
 //Accelerator Pedal to Torque
-function MainTorquePoll() {
+function MainTorquePoll(AcceleratorRaw) {
   //MG1 RPM Calculation
   F_CAN[9] = F_CAN[0] * 130;
   //MG1 Torque calculation
@@ -23,7 +23,8 @@ function MainTorquePoll() {
   } else {
     let MG1Torque = 314;
   }
-  F_CAN[5] = MG1Torque * (AcceleratorRaw / 100);
+  //Return the Torque Demand
+  return MG1Torque * (AcceleratorRaw / 100);
 }
 
 //Lots of independent functions, will be combined into a more efficent blob at some point
