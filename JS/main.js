@@ -23,9 +23,7 @@ var F_CAN = [
 var DebugUItext
 //powertrain variables
 F_CAN[0] = 0;
-//Resistance variables
-var BaseResistance = 200;
-var ResistanceExponental = 1;
+
 //Timer variables
 let lastTimestamp = 0; 
 var StepLastTime 

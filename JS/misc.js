@@ -20,3 +20,9 @@ function brakecontrol() {
         }
     }
 }
+//Resistance variables
+var BaseResistance = 200;
+var ResistanceExponental = 1;
+function ResistanceCalc() {
+    
+}
