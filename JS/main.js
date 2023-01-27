@@ -4,7 +4,7 @@
 var F_CAN = [
   "0_Speed:",
   "1_RegenAvalibleTorque:",
-  "2_:",
+  "2_LockUpClutch:",
   "3_BrakeDemand:",
   "4_MG1TorqueLimit;",
   "5_TorqueDemand:",
@@ -53,13 +53,18 @@ function Main() {
     F_CAN[3] = 0;
     F_CAN[13] = 0;
     if (F_CAN[15] == 1) {
-      //standard operating mode as a hybrid
+      //operating mode as a hybrid
+      if (condition) {
+        //operating mode in the event of a criticaly low battery
+        F_CAN[2] = 0;
+        F_CAN[10] = 76.8;
+      } else {
+        //standard operating mode
+      }
     } else {
       //run as an EV
       EVMode();
     }
-
-
   }
 }
 //prototype HTML text adder
