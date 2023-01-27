@@ -13,9 +13,10 @@ function brakecontrol() {
             if (F_CAN[3] >= F_CAN[1]) {
                 //Regen unable to meet demanded torque requested, use max regen, make up with auxiliary
                 F_CAN[13] = F_CAN[3] - F_CAN[1];
-                F_CAN[6] = F_CAN[1];
+                F_CAN[6] = F_CAN[1] * -1;
             } else {
-                F_CAN[6] = F_CAN[3];
+                //Regen only
+                F_CAN[6] = F_CAN[3] * -1;
             }
         }
     }
