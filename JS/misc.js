@@ -21,8 +21,13 @@ function brakecontrol() {
     }
 }
 //Resistance variables
-var BaseResistance = 200;
-var ResistanceExponental = 1;
+const BaseResistance = 200;
+const ResistanceExponental = 1;
 function ResistanceCalc() {
-    
+    if (F_CAN[0] >= 0.2) {
+        let Resistance = BaseResistance + Math.pow(F_CAN[0], ResistanceExponental);
+    } else {
+        let Resistance = 0;
+    }
+    return Resistance;
 }
