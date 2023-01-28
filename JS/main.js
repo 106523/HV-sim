@@ -52,7 +52,7 @@ function Main() {
     //make sure the car isnt fighting against the brakes
     F_CAN[3] = 0;
     F_CAN[13] = 0;
-    if (F_CAN[15] == 1) {
+    if (F_CAN[15] === 1) {
       //operating mode as a hybrid
       if (condition) {
         //operating mode in the event of a criticaly low battery
@@ -70,7 +70,7 @@ function Main() {
 //prototype HTML text adder
 function DebugText(TextInput, Flush) {
   DebugUItext = DebugUItext + ("\n" + TextInput);
-  if (Flush == 1) {
+  if (Flush === 1) {
     document.querySelector('#header').innerHTML = DebugUItext
     DebugUItext = ""
   }
