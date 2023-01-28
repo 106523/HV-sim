@@ -2,7 +2,7 @@
 
 
 
-
+let MG1Torque;
 
 
 //when main torque poll is run it should run the MG1 torque calculation as well.
@@ -20,9 +20,9 @@ function MainTorquePoll(AcceleratorRaw) {
     F_CAN[4] = 314;
   }
   if ((9.5488 * 134972) / F_CAN[9] <= 314) {
-    let MG1Torque = (9.5488 * 134972) / F_CAN[9];
+    MG1Torque = (9.5488 * 134972) / F_CAN[9];
   } else {
-    let MG1Torque = 314;
+    MG1Torque = 314;
   }
   //Return the Torque Demand
   return MG1Torque * (AcceleratorRaw / 100);
@@ -45,7 +45,7 @@ function WheelTorquePoll() {
 //Regen Torque Calculation
 function RegenAvalibleTorquePoll() {
   //THIS IS ALSO A GODAWFUL BROKEN HACK I HOPE IT WORKS
-  F_CAN[1] = Math.max(0, MG1Torque - 350 / (MG1RPM / 500));
+  F_CAN[1] = Math.max(0, MG1Torque - 350 / (F_CAN[9] / 500));
 }
 
 //engine ecu code here
