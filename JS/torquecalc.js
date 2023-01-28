@@ -14,12 +14,12 @@ function MainTorquePoll(AcceleratorRaw) {
   //Calculate MG1 Torque limit
   //why the fuck did I have a seperate KW calculator again if this does the same thing?!
   //could use some math.min thing here isnted of an if statement
-  if (314 >= (9.5488 * (F_CAN[10] + BatteryMaxPowerDraw)) / F_CAN[9]) {
+  if ((9.5488 * (F_CAN[10] + BatteryMaxPowerDraw)) / F_CAN[9] <= 314) {
     F_CAN[4] = (9.5488 * (F_CAN[10] + BatteryMaxPowerDraw)) / F_CAN[9];
   } else {
     F_CAN[4] = 314;
   }
-  if (314 >= (9.5488 * 134972) / F_CAN[9]) {
+  if ((9.5488 * 134972) / F_CAN[9] <= 314) {
     let MG1Torque = (9.5488 * 134972) / F_CAN[9];
   } else {
     let MG1Torque = 314;
