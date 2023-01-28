@@ -26,6 +26,7 @@ const MaxBrakeTorque = 1000;
 var DebugUItext
 //powertrain variables
 F_CAN[0] = 0;
+const BatteryMaxPowerDraw = 100000;
 //Timer variables
 let lastTimestamp = 0; 
 var StepLastTime 
