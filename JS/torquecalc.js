@@ -32,9 +32,9 @@ function MainTorquePoll(AcceleratorRaw) {
 //might feed some vars right up the asshole of this function, or I might just use a list.
 function WheelTorquePoll() {
   //call the rolling resistance calculator
-  let Resistance = RollingResistanceCalc();
+  const Resistance = RollingResistanceCalc();
   //Overall Toruqe output
-  let CountershaftTorque = F_CAN[6] + EngineTorqueOutput;
+  const CountershaftTorque = F_CAN[6] + EngineTorqueOutput;
   //Countershaft Torque to Wheel Torque
   F_CAN[7] = Math.round(((CountershaftTorque + FrictionBrakeDemand * -1) * (FinalDrive * MotorCountershaft)) - Resistance);
 }
