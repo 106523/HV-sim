@@ -47,7 +47,7 @@ function Main() {
   if(BrakePedal > 0){
     F_CAN[3] = MaxBrakeTorque * (BrakePedal / 100);
     //call the whole brake handler thingy
-    brakecontrol();
+    brakecontrol(F_CAN[3], F_CAN[14], F_CAN[1]);
   } else {
     //start deciding what to do to make the car go vroom!
     //make sure the car isnt fighting against the brakes
