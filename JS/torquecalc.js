@@ -2,7 +2,7 @@
 
 
 
-let MG1Torque;
+let MG1Torque = 0;
 
 
 //when main torque poll is run it should run the MG1 torque calculation as well.

@@ -23,13 +23,13 @@ var F_CAN = [
 ];
 //set max brake torque
 const MaxBrakeTorque = 1000;
-var DebugUItext
+var DebugUItext = "";
 //powertrain variables
 F_CAN[0] = 0;
 const BatteryMaxPowerDraw = 100000;
 //Timer variables
 let lastTimestamp = 0; 
-var StepLastTime 
+var StepLastTime = 0;
 
 setInterval(function(){Main(); }, 1);
 function Main() {
