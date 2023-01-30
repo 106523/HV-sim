@@ -7,25 +7,25 @@ let MG1Torque = 0;
 
 //when main torque poll is run it should run the MG1 torque calculation as well.
 //Accelerator Pedal to Torque
-function MainTorquePoll(AcceleratorRaw) {
+function MainTorquePoll(AcceleratorRaw, Speed) {
   //MG1 RPM Calculation
-  F_CAN[9] = F_CAN[0] * 130;
+  const MG1RPM = Speed * 130;
   //MG1 Torque calculation
   //Calculate MG1 Torque limit
   //why the fuck did I have a seperate KW calculator again if this does the same thing?!
   //could use some math.min thing here isnted of an if statement
-  if ((9.5488 * (F_CAN[10] + BatteryMaxPowerDraw)) / F_CAN[9] <= 314) {
-    F_CAN[4] = (9.5488 * (F_CAN[10] + BatteryMaxPowerDraw)) / F_CAN[9];
+  if ((9.5488 * (F_CAN[10] + BatteryMaxPowerDraw)) / MG1RPM <= 314) {
+    const MG1TorqueLimit = (9.5488 * (F_CAN[10] + BatteryMaxPowerDraw)) / MG1RPM;
   } else {
-    F_CAN[4] = 314;
+    const MG1TorqueLimit = 314;
   }
-  if ((9.5488 * 134972) / F_CAN[9] <= 314) {
-    MG1Torque = (9.5488 * 134972) / F_CAN[9];
+  if ((9.5488 * 134972) / MG1RPM <= 314) {
+    MG1Torque = (9.5488 * 134972) / MG1RPM;
   } else {
     MG1Torque = 314;
   }
   //Return the Torque Demand
-  return MG1Torque * (AcceleratorRaw / 100);
+  return MG1Torque * (AcceleratorRaw / 100), MG1TorqueLimit;
 }
 
 //Lots of independent functions, will be combined into a more efficent blob at some point
@@ -45,7 +45,7 @@ function WheelTorquePoll() {
 //Regen Torque Calculation
 function RegenAvalibleTorquePoll() {
   //THIS IS ALSO A GODAWFUL BROKEN HACK I HOPE IT WORKS
-  F_CAN[1] = Math.max(0, MG1Torque - 350 / (F_CAN[9] / 500));
+  F_CAN[1] = Math.max(0, MG1Torque - 350 / (MG1RPM / 500));
 }
 
 //engine ecu code here
