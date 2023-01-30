@@ -29,7 +29,6 @@ F_CAN[0] = 0;
 const BatteryMaxPowerDraw = 100000;
 //Timer variables
 let lastTimestamp = 0; 
-var StepLastTime = 0;
 
 setInterval(function(){Main(); }, 1);
 function Main() {
