@@ -24,9 +24,9 @@ function brakecontrol() {
 //Resistance variables
 const BaseResistance = 200;
 const ResistanceExponental = 1;
-function ResistanceCalc() {
-    if (F_CAN[0] >= 0.2) {
-        let Resistance = BaseResistance + Math.pow(F_CAN[0], ResistanceExponental);
+function ResistanceCalc(speed) {
+    if (speed >= 0.2) {
+        let Resistance = BaseResistance + Math.pow(speed, ResistanceExponental);
     } else {
         let Resistance = 0;
     }
