@@ -34,7 +34,11 @@ setInterval(function(){Main(); }, 1);
 function Main() {
   //grab some basic input
   //get accelerator slider value
-  F_CAN[5] = MainTorquePoll(document.getElementById("Accelerator"));
+  const TorqueValues = MainTorquePoll(document.getElementById("Accelerator"));
+  const TorqueDemand = TorqueValues.MG1Torque;
+  const MG1TorqueLimit = TorqueValues.MG1TorqueLimit;
+  
+  F_CAN[5] = TorqueDemand
   // const timestamp = Date.now();
   //checks how long each step is so the program can compensate for execution speeds
   F_CAN[8] = Date.now() - lastTimestamp;

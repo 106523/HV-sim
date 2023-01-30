@@ -25,7 +25,10 @@ function MainTorquePoll(AcceleratorRaw, Speed) {
     MG1Torque = 314;
   }
   //Return the Torque Demand
-  return MG1Torque * (AcceleratorRaw / 100), MG1TorqueLimit;
+  return {
+    'MG1Torque': MG1Torque * (AcceleratorRaw / 100),
+    'MG1TorqueLimit': MG1TorqueLimit
+  };
 }
 
 //Lots of independent functions, will be combined into a more efficent blob at some point
@@ -45,7 +48,7 @@ function WheelTorquePoll() {
 //Regen Torque Calculation
 function RegenAvalibleTorquePoll() {
   //THIS IS ALSO A GODAWFUL BROKEN HACK I HOPE IT WORKS
-  F_CAN[1] = Math.max(0, MG1Torque - 350 / (MG1RPM / 500));
+  return Math.max(0, MG1Torque - 350 / (MG1RPM / 500));
 }
 
 //engine ecu code here

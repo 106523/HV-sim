@@ -1,4 +1,4 @@
-function brakecontrol(BrakeDemand, HVSOC, RegenAvalibleTorque) {
+function brakecontrol(BrakeDemand, HVSOC) {
     if (BrakeDemand >= 800) {
         //basically a thing faking ABS, regen is disabled
         let FrictionBrakeDemand = BrakeDemand;
@@ -11,7 +11,7 @@ function brakecontrol(BrakeDemand, HVSOC, RegenAvalibleTorque) {
             let MG1TorqueOutput = 0;
             return MG1TorqueOutput, FrictionBrakeDemand;
         } else {
-            RegenAvalibleTorquePoll();
+            const RegenAvalibleTorque = RegenAvalibleTorquePoll();
             if (BrakeDemand >= RegenAvalibleTorque) {
                 //Regen unable to meet demanded torque requested, use max regen, make up with auxiliary
                 let FrictionBrakeDemand = BrakeDemand - RegenAvalibleTorque;
@@ -20,6 +20,7 @@ function brakecontrol(BrakeDemand, HVSOC, RegenAvalibleTorque) {
             } else {
                 //Regen only
                 let MG1TorqueOutput = BrakeDemand * -1;
+                let FrictionBrakeDemand = 0;
                 return MG1TorqueOutput;
             }
         }
