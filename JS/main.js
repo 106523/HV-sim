@@ -17,6 +17,7 @@ var F_CAN = {
   "LockUpClutch" : 0,
   "EngineGeneration" : 0,
   "EngineRPM" : 0,
+  "WheelTorque" : 0,
 
 
 }
@@ -67,6 +68,8 @@ function Main() {
       EVMode();
     }
   }
+  F_CAN.WheelTorque = WheelTorquePoll(F_CAN.MG1TorqueOutput, F_CAN.FrictionBrakeDemand, F_CAN.EngineTorqueOutput);
+  acelcalc(F_CAN.Speed, F_CAN.WheelTorque, F_CAN.StepTime);
 }
 //prototype HTML text adder
 function DebugText(TextInput, Flush) {
