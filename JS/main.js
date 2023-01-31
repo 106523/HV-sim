@@ -1,31 +1,30 @@
 //variables the main function will be dealing (eg. speed) with NEED to be global. 
 //Perhaps I will optimise the debug ui text thing, make it NON global, just easier to use a global for now.
 //okay so the whole AP thing needs some lists, perhaps I could make some "CAN bus" like system, will need to have some decoder rings
-var F_CAN = [
-  "0_Speed:",
-  "1_RegenAvalibleTorque:",
-  "2_LockUpClutch:",
-  "3_BrakeDemand:",
-  "4_MG1TorqueLimit;",
-  "5_TorqueDemand:",
-  "6_MG1TorqueOutput:",
-  "7_WheelTorque:",
-  "8_StepTime:",
-  "9_MG1RPM:",
-  "10_EngineGeneration:",
-  "11_EngineTorqueOutput:",
-  "12_EngineRPM:",
-  "13_FrictionBrakeDemand:",
-  "14_HVSOC:",
-  "15_HVMode:",
-  
 
-];
+var F_CAN = {
+  "Speed" : 0,
+  "MG1RPM" : 0,
+  "TorqueDemand" : 0,
+  "StepTime" : 0,
+  "MG1TorqueOutput" : 0,
+  "EngineTorqueOutput" : 0,
+  "MG1TorqueLimit" : 0,
+  "RegenAvalibleTorque" : 0,
+  "HVSOC" : 0,
+  "FrictionBrakeDemand" : 0,
+  "HVMode" : 0,
+  "LockUpClutch" : 0,
+  "EngineGeneration" : 0,
+  "EngineRPM" : 0,
+
+
+}
 //set max brake torque
 const MaxBrakeTorque = 1000;
 var DebugUItext = "";
 //powertrain variables
-F_CAN[0] = 0;
+F_CAN.Speed = 0;
 const BatteryMaxPowerDraw = 100000;
 //Timer variables
 let lastTimestamp = 0; 
@@ -35,34 +34,31 @@ function Main() {
   //grab some basic input
   //get accelerator slider value
   const TorqueValues = MainTorquePoll(document.getElementById("Accelerator"));
-  const TorqueDemand = TorqueValues.MG1Torque;
+  F_CAN.TorqueDemand = TorqueValues.TorqueDemand;
   const MG1TorqueLimit = TorqueValues.MG1TorqueLimit;
-  
-  F_CAN[5] = TorqueDemand
   // const timestamp = Date.now();
   //checks how long each step is so the program can compensate for execution speeds
-  F_CAN[8] = Date.now() - lastTimestamp;
+  F_CAN.StepTime = Date.now() - lastTimestamp;
   lastTimestamp = Date.now();
   //prototype, prints to #header
-  DebugText("AcceleratorRaw:" + F_CAN[1].valueOf, 0);
-  DebugText("Steptime:" + F_CAN[8], 1);
+  DebugText("Steptime:" + F_CAN.StepTime, 1);
   //brake override function
   if(BrakePedal > 0){
     const BrakeDemand = MaxBrakeTorque * (BrakePedal / 100);
     //call the whole brake handler thingy
-    const BrakeVars = brakecontrol(BrakeDemand, F_CAN[14], F_CAN[1]);
-    const FrictionBrakeDemand = BrakeVars.FrictionBrakeDemand;
-    F_CAN[6] = BrakeVars.MG1TorqueOutput;
+    const BrakeVars = brakecontrol(BrakeDemand, F_CAN.HVSOC, F_CAN.RegenAvalibleTorque);
+    F_CAN.FrictionBrakeDemand = BrakeVars.FrictionBrakeDemand;
+    F_CAN.MG1TorqueOutput = BrakeVars.MG1TorqueOutput;
   } else {
     //start deciding what to do to make the car go vroom!
     //make sure the car isnt fighting against the brakes
-    F_CAN[13] = 0;
-    if (F_CAN[15] === 1) {
+    F_CAN.FrictionBrakeDemand = 0;
+    if (F_CAN.HVMode === 1) {
       //operating mode as a hybrid
       if (condition) {
         //operating mode in the event of a criticaly low battery
-        F_CAN[2] = 0;
-        F_CAN[10] = 76.8;
+        F_CAN.LockUpClutch = 0;
+        F_CAN.EngineGeneration = 76.8;
       } else {
         //standard operating mode
       }
@@ -85,13 +81,13 @@ function EVMode() {
   //Pure EV Mode
   //Dont call the engine ECU to save resources
   //let everything else know the engine isnt doing shit
-  F_CAN[12] = 0;
-  F_CAN[11] = 0;
-  F_CAN[10] = 0;
+  F_CAN.EngineTorqueOutput = 0;
+  F_CAN.EngineRPM = 0;
+  F_CAN.EngineGeneration = 0;
   //why the FUCK did I make MG1Torquelimit an absolute? Did it ever go into the NEGATIVE range for god knows what reason?!
-  if (F_CAN[5] >= Math.abs(F_CAN[4])) {
-      F_CAN[6] = F_CAN[4];
+  if (F_CAN.TorqueDemand >= Math.abs(F_CAN.MG1TorqueLimit)) {
+      F_CAN.MG1TorqueOutput = F_CAN.MG1TorqueLimit;
     } else {
-      F_CAN[6] = F_CAN[5];
+      F_CAN.MG1TorqueOutput = F_CAN.TorqueDemand;
     }
 }

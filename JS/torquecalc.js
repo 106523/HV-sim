@@ -13,9 +13,9 @@ function MainTorquePoll(AcceleratorRaw, Speed) {
   //why the fuck did I have a seperate KW calculator again if this does the same thing?!
   //could use some math.min thing here isnted of an if statement
   if ((9.5488 * (F_CAN[10] + BatteryMaxPowerDraw)) / MG1RPM <= 314) {
-    const MG1TorqueLimit = (9.5488 * (F_CAN[10] + BatteryMaxPowerDraw)) / MG1RPM;
+    var MG1TorqueLimit = (9.5488 * (F_CAN[10] + BatteryMaxPowerDraw)) / MG1RPM;
   } else {
-    const MG1TorqueLimit = 314;
+    var MG1TorqueLimit = 314;
   }
   if ((9.5488 * 134972) / MG1RPM <= 314) {
     var MG1Torque = (9.5488 * 134972) / MG1RPM;
@@ -24,18 +24,18 @@ function MainTorquePoll(AcceleratorRaw, Speed) {
   }
   //Return the Torque Demand
   return {
-    'MG1Torque': MG1Torque * (AcceleratorRaw / 100),
+    'TorqueDemand': MG1Torque * (AcceleratorRaw / 100),
     'MG1TorqueLimit': MG1TorqueLimit
   };
 }
 
 //Lots of independent functions, will be combined into a more efficent blob at some point
 //might feed some vars right up the asshole of this function, or I might just use a list.
-function WheelTorquePoll() {
+function WheelTorquePoll(MG1TorqueOutput, EngineTorqueOutput) {
   //call the rolling resistance calculator
   const Resistance = RollingResistanceCalc();
   //Overall Toruqe output
-  const CountershaftTorque = F_CAN[6] + EngineTorqueOutput;
+  const CountershaftTorque = MG1TorqueOutput + EngineTorqueOutput;
   //Countershaft Torque to Wheel Torque
   F_CAN[7] = Math.round(((CountershaftTorque + FrictionBrakeDemand * -1) * (FinalDrive * MotorCountershaft)) - Resistance);
 }
