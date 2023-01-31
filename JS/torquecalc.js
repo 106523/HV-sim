@@ -2,8 +2,6 @@
 
 
 
-let MG1Torque = 0;
-
 
 //when main torque poll is run it should run the MG1 torque calculation as well.
 //Accelerator Pedal to Torque
@@ -20,9 +18,9 @@ function MainTorquePoll(AcceleratorRaw, Speed) {
     const MG1TorqueLimit = 314;
   }
   if ((9.5488 * 134972) / MG1RPM <= 314) {
-    MG1Torque = (9.5488 * 134972) / MG1RPM;
+    var MG1Torque = (9.5488 * 134972) / MG1RPM;
   } else {
-    MG1Torque = 314;
+    var MG1Torque = 314;
   }
   //Return the Torque Demand
   return {
