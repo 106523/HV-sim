@@ -48,13 +48,14 @@ function Main() {
   DebugText("Steptime:" + F_CAN[8], 1);
   //brake override function
   if(BrakePedal > 0){
-    F_CAN[3] = MaxBrakeTorque * (BrakePedal / 100);
+    const BrakeDemand = MaxBrakeTorque * (BrakePedal / 100);
     //call the whole brake handler thingy
-    brakecontrol(F_CAN[3], F_CAN[14], F_CAN[1]);
+    const BrakeVars = brakecontrol(BrakeDemand, F_CAN[14], F_CAN[1]);
+    const FrictionBrakeDemand = BrakeVars.FrictionBrakeDemand;
+    F_CAN[6] = BrakeVars.MG1TorqueOutput;
   } else {
     //start deciding what to do to make the car go vroom!
     //make sure the car isnt fighting against the brakes
-    F_CAN[3] = 0;
     F_CAN[13] = 0;
     if (F_CAN[15] === 1) {
       //operating mode as a hybrid

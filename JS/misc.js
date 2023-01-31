@@ -2,26 +2,39 @@ function brakecontrol(BrakeDemand, HVSOC) {
     if (BrakeDemand >= 800) {
         //basically a thing faking ABS, regen is disabled
         let FrictionBrakeDemand = BrakeDemand;
-        return FrictionBrakeDemand;
+        let MG1TorqueOutput = 0;
+        return {
+            'FrictionBrakeDemand': FrictionBrakeDemand,
+            'MG1TorqueOutput': MG1TorqueOutput
+        };
         //done!
     } else {
         if (HVSOC >= 95) {
             //Battery too full to use regen
             let FrictionBrakeDemand = BrakeDemand;
             let MG1TorqueOutput = 0;
-            return MG1TorqueOutput, FrictionBrakeDemand;
+            return {
+                'FrictionBrakeDemand': FrictionBrakeDemand,
+                'MG1TorqueOutput': MG1TorqueOutput
+            };
         } else {
             const RegenAvalibleTorque = RegenAvalibleTorquePoll();
             if (BrakeDemand >= RegenAvalibleTorque) {
                 //Regen unable to meet demanded torque requested, use max regen, make up with auxiliary
                 let FrictionBrakeDemand = BrakeDemand - RegenAvalibleTorque;
                 let MG1TorqueOutput = RegenAvalibleTorque * -1;
-                return MG1TorqueOutput, FrictionBrakeDemand;
+                return {
+                    'FrictionBrakeDemand': FrictionBrakeDemand,
+                    'MG1TorqueOutput': MG1TorqueOutput
+                };
             } else {
                 //Regen only
                 let MG1TorqueOutput = BrakeDemand * -1;
                 let FrictionBrakeDemand = 0;
-                return MG1TorqueOutput;
+                return {
+                    'FrictionBrakeDemand': FrictionBrakeDemand,
+                    'MG1TorqueOutput': MG1TorqueOutput
+                };
             }
         }
     }
