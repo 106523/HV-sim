@@ -19,8 +19,6 @@ var F_CAN = {
   "EngineGeneration" : 0,
   "EngineRPM" : 0,
   "WheelTorque" : 0,
-
-
 }
 //set max brake torque
 const MaxBrakeTorque = 1000;
@@ -97,13 +95,8 @@ function EVMode() {
     }
 }
 
-
 //torque calculation
 //this entire thing could be made multithreaded, would be intresting to try.
-
-
-
-
 //when main torque poll is run it should run the MG1 torque calculation as well.
 //Accelerator Pedal to Torque
 function MainTorquePoll(AcceleratorRaw) {
