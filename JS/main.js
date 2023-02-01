@@ -31,14 +31,14 @@ const BatteryMaxPowerDraw = 100000;
 //Timer variables
 let lastTimestamp = 0; 
 
-setInterval(function(){Main(); }, 1);
+setInterval(function(){Main(); }, 100);
 function Main() {
   //grab some basic input
   //get brake slider value
   const BrakePedal = document.getElementById("brakePedal").value;
   //get accelerator slider value
   MainTorquePoll(document.getElementById("Accelerator"), F_CAN.Speed, F_CAN.EngineGeneration);
-  F_CAN.TorqueDemand = F_CAN.MG1Torque * (AcceleratorRaw / 100),
+ 
   // const timestamp = Date.now();
   //checks how long each step is so the program can compensate for execution speeds
   F_CAN.StepTime = Date.now() - lastTimestamp;
@@ -70,8 +70,8 @@ function Main() {
       EVMode();
     }
   }
-  F_CAN.WheelTorque = WheelTorquePoll(F_CAN.MG1TorqueOutput, F_CAN.FrictionBrakeDemand, F_CAN.EngineTorqueOutput);
-  acelcalc(F_CAN.Speed, F_CAN.WheelTorque, F_CAN.StepTime);
+  F_CAN.WheelTorque = WheelTorquePoll();
+  acelcalc();
 }
 //prototype HTML text adder
 function DebugText(TextInput, Flush) {
@@ -106,34 +106,35 @@ function EVMode() {
 
 //when main torque poll is run it should run the MG1 torque calculation as well.
 //Accelerator Pedal to Torque
-function MainTorquePoll(AcceleratorRaw, Speed, EngineGeneration) {
+function MainTorquePoll(AcceleratorRaw) {
   //MG1 RPM Calculation
   F_CAN.MG1RPM = F_CAN.Speed * 130;
   //MG1 Torque calculation
   //Calculate MG1 Torque limit
   //why the fuck did I have a seperate KW calculator again if this does the same thing?!
   //could use some math.min thing here isnted of an if statement
-  if ((9.5488 * (EngineGeneration + BatteryMaxPowerDraw)) / MG1RPM <= 314) {
-    F_CAN.MG1TorqueLimit = MG1TorqueLimit = (9.5488 * (EngineGeneration + BatteryMaxPowerDraw)) / MG1RPM;
+  if ((9.5488 * (F_CAN.EngineGeneration + BatteryMaxPowerDraw)) / F_CAN.MG1RPM <= 314) {
+    F_CAN.MG1TorqueLimit = (9.5488 * (F_CAN.EngineGeneration + BatteryMaxPowerDraw)) / F_CAN.MG1RPM;
   } else {
-    F_CAN.MG1TorqueLimit = MG1TorqueLimit = 314;
+    F_CAN.MG1TorqueLimit = 314;
   }
-  if ((9.5488 * 134972) / MG1RPM <= 314) {
-    F_CAN.MG1Torque = (9.5488 * 134972) / MG1RPM;
+  if ((9.5488 * 134972) / F_CAN.MG1RPM <= 314) {
+    F_CAN.MG1Torque = (9.5488 * 134972) / F_CAN.MG1RPM;
   } else {
     F_CAN.MG1Torque = 314;
   }
+  F_CAN.TorqueDemand = F_CAN.MG1Torque * (AcceleratorRaw / 100);
 }
 
 //Lots of independent functions, will be combined into a more efficent blob at some point
 //might feed some vars right up the asshole of this function, or I might just use a list.
-function WheelTorquePoll(FrictionBrakeDemand) {
+function WheelTorquePoll() {
   //call the rolling resistance calculator
   const Resistance = RollingResistanceCalc();
   //Overall Toruqe output
   const CountershaftTorque = F_CAN.MG1TorqueOutput + F_CAN.EngineTorqueOutput;
   //Countershaft Torque to Wheel Torque
-  return Math.round(((CountershaftTorque + FrictionBrakeDemand * -1) * (FinalDrive * MotorCountershaft)) - Resistance);
+  return Math.round(((CountershaftTorque + F_CAN.FrictionBrakeDemand * -1) * (FinalDrive * MotorCountershaft)) - Resistance);
 }
 
 
@@ -142,7 +143,21 @@ function WheelTorquePoll(FrictionBrakeDemand) {
 //Regen Torque Calculation
 function RegenAvalibleTorquePoll() {
   //THIS IS ALSO A GODAWFUL BROKEN HACK I HOPE IT WORKS
-  return Math.max(0, MG1Torque - 350 / (MG1RPM / 500));
+  return Math.max(0, F_CAN.MG1Torque - 350 / (F_CAN.MG1RPM / 500));
 }
 
+//acceleration calculation
+//2.23694 is the number you use to convert KMH to MPH
+const TireRadius = 0.3429;
+const WeightKG = 1841;
+function acelcalc() {
+    //wheel torque to newtons
+    const Newtons = F_CAN.WheelTorque / TireRadius;
+    //calculate the acceleration (still need to find out what unit of acceleration it is but as long as it works)
+    const Acceleration = Newtons / WeightKG;
+    //calculate the speed change over time due to acceleration (the greeks called it delta so im going to call it that too because it sounds cool)
+    const DeltaSpeed = (Acceleration * (F_CAN.StepTime / 1000)) * 2.23694;
+    //set the speed, and set speed to 0 if it is negative to prevent the program from shiting itself.
+    F_CAN.Speed = Math.max(0, F_CAN.Speed + DeltaSpeed);
+}
 //engine ecu code here
