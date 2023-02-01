@@ -33,6 +33,8 @@ let lastTimestamp = 0;
 setInterval(function(){Main(); }, 1);
 function Main() {
   //grab some basic input
+  //get brake slider value
+  const BrakePedal = document.getElementById("brakePedal").value;
   //get accelerator slider value
   const TorqueValues = MainTorquePoll(document.getElementById("Accelerator"), F_CAN.Speed, F_CAN.EngineGeneration);
   F_CAN.TorqueDemand = TorqueValues.TorqueDemand;
