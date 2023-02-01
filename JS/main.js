@@ -19,7 +19,7 @@ var F_CAN = {
   "EngineGeneration" : 0,
   "EngineRPM" : 0,
   "WheelTorque" : 0,
-}
+};
 //set max brake torque
 const MaxBrakeTorque = 1000;
 var DebugUItext = "";
@@ -28,6 +28,10 @@ F_CAN.Speed = 0;
 const BatteryMaxPowerDraw = 100000;
 //Timer variables
 let lastTimestamp = 0; 
+//misc variables
+//2.23694 is the number you use to convert KMH to MPH
+const TireRadius = 0.3429;
+const WeightKG = 1841;
 
 setInterval(function(){Main(); }, 100);
 function Main() {
@@ -140,9 +144,7 @@ function RegenAvalibleTorquePoll() {
 }
 
 //acceleration calculation
-//2.23694 is the number you use to convert KMH to MPH
-const TireRadius = 0.3429;
-const WeightKG = 1841;
+
 function acelcalc() {
     //wheel torque to newtons
     const Newtons = F_CAN.WheelTorque / TireRadius;
