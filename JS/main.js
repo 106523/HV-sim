@@ -10,6 +10,7 @@ var F_CAN = {
   "MG1TorqueOutput" : 0,
   "EngineTorqueOutput" : 0,
   "MG1TorqueLimit" : 0,
+  "MG1Torque" : 0,
   "RegenAvalibleTorque" : 0,
   "HVSOC" : 0,
   "FrictionBrakeDemand" : 0,
@@ -36,9 +37,8 @@ function Main() {
   //get brake slider value
   const BrakePedal = document.getElementById("brakePedal").value;
   //get accelerator slider value
-  const TorqueValues = MainTorquePoll(document.getElementById("Accelerator"), F_CAN.Speed, F_CAN.EngineGeneration);
-  F_CAN.TorqueDemand = TorqueValues.TorqueDemand;
-  F_CAN.MG1TorqueLimit = TorqueValues.MG1TorqueLimit;
+  MainTorquePoll(document.getElementById("Accelerator"), F_CAN.Speed, F_CAN.EngineGeneration);
+  F_CAN.TorqueDemand = F_CAN.MG1Torque * (AcceleratorRaw / 100),
   // const timestamp = Date.now();
   //checks how long each step is so the program can compensate for execution speeds
   F_CAN.StepTime = Date.now() - lastTimestamp;
@@ -108,35 +108,30 @@ function EVMode() {
 //Accelerator Pedal to Torque
 function MainTorquePoll(AcceleratorRaw, Speed, EngineGeneration) {
   //MG1 RPM Calculation
-  const MG1RPM = Speed * 130;
+  F_CAN.MG1RPM = F_CAN.Speed * 130;
   //MG1 Torque calculation
   //Calculate MG1 Torque limit
   //why the fuck did I have a seperate KW calculator again if this does the same thing?!
   //could use some math.min thing here isnted of an if statement
   if ((9.5488 * (EngineGeneration + BatteryMaxPowerDraw)) / MG1RPM <= 314) {
-    var MG1TorqueLimit = (9.5488 * (EngineGeneration + BatteryMaxPowerDraw)) / MG1RPM;
+    F_CAN.MG1TorqueLimit = MG1TorqueLimit = (9.5488 * (EngineGeneration + BatteryMaxPowerDraw)) / MG1RPM;
   } else {
-    var MG1TorqueLimit = 314;
+    F_CAN.MG1TorqueLimit = MG1TorqueLimit = 314;
   }
   if ((9.5488 * 134972) / MG1RPM <= 314) {
-    var MG1Torque = (9.5488 * 134972) / MG1RPM;
+    F_CAN.MG1Torque = (9.5488 * 134972) / MG1RPM;
   } else {
-    var MG1Torque = 314;
+    F_CAN.MG1Torque = 314;
   }
-  //Return the Torque Demand
-  return {
-    'TorqueDemand': MG1Torque * (AcceleratorRaw / 100),
-    'MG1TorqueLimit': MG1TorqueLimit
-  };
 }
 
 //Lots of independent functions, will be combined into a more efficent blob at some point
 //might feed some vars right up the asshole of this function, or I might just use a list.
-function WheelTorquePoll(MG1TorqueOutput, EngineTorqueOutput, FrictionBrakeDemand) {
+function WheelTorquePoll(FrictionBrakeDemand) {
   //call the rolling resistance calculator
   const Resistance = RollingResistanceCalc();
   //Overall Toruqe output
-  const CountershaftTorque = MG1TorqueOutput + EngineTorqueOutput;
+  const CountershaftTorque = F_CAN.MG1TorqueOutput + F_CAN.EngineTorqueOutput;
   //Countershaft Torque to Wheel Torque
   return Math.round(((CountershaftTorque + FrictionBrakeDemand * -1) * (FinalDrive * MotorCountershaft)) - Resistance);
 }
