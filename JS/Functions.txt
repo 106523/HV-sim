@@ -1,3 +1,6 @@
 This list contains the descriptions of functions
 
 Main: The main function is the function triggered by the setinterval (Used to run the code repeatedly, basically as fast as it can). The main function contains the step timer, and contains the basic input handling. Subsequent functions are triggered from the main function.
+
+EVMode: Is called whenever the car is in EV mode, ECU is not called, and the function sets all the engine shit to 0, because, well, the engine isnt being used!
+

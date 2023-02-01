@@ -2,6 +2,7 @@
 //Perhaps I will optimise the debug ui text thing, make it NON global, just easier to use a global for now.
 //okay so the whole AP thing needs some lists, perhaps I could make some "CAN bus" like system, will need to have some decoder rings
 
+//uninitialized variables BE GONE!!!!! EVERYTHING THAT WILL EVER BE WILL ALWAYS BE SINCE ALWAYS, NEVER AGAIN WILL WE HAVE TO FEAR THE UNDEFINED VARIABLE!!!
 var F_CAN = {
   "Speed" : 0,
   "MG1RPM" : 0,
@@ -60,7 +61,7 @@ function Main() {
     F_CAN.FrictionBrakeDemand = 0;
     if (F_CAN.HVMode === 1) {
       //operating mode as a hybrid
-      if (condition) {
+      if (F_CAN.HVSOC >= 10) {
         //operating mode in the event of a criticaly low battery
         F_CAN.LockUpClutch = 0;
         F_CAN.EngineGeneration = 76.8;
