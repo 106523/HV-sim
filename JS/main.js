@@ -15,6 +15,7 @@ var F_CAN = {
   "RegenAvalibleTorque" : 0,
   "HVSOC" : 0,
   "FrictionBrakeDemand" : 0,
+  "BrakeDemand" : 0,
   "HVMode" : 0,
   "LockUpClutch" : 0,
   "EngineGeneration" : 0,
@@ -50,7 +51,7 @@ function Main() {
   DebugText("Steptime:" + F_CAN.StepTime, 1);
   //brake override function
   if(BrakePedal > 0){
-    const BrakeDemand = MaxBrakeTorque * (BrakePedal / 100);
+    F_CAN.BrakeDemand = MaxBrakeTorque * (BrakePedal / 100);
     //call the whole brake handler thingy
     const BrakeVars = brakecontrol(BrakeDemand, F_CAN.HVSOC, F_CAN.RegenAvalibleTorque);
     F_CAN.FrictionBrakeDemand = BrakeVars.FrictionBrakeDemand;
@@ -172,43 +173,26 @@ function ECU() {
   };
 }
 
-function brakecontrol(BrakeDemand, HVSOC) {
-  if (BrakeDemand >= 800) {
+function brakecontrol() {
+  if (F_CAN.BrakeDemand >= 800) {
       //basically a thing faking ABS, regen is disabled
-      let FrictionBrakeDemand = BrakeDemand;
-      let MG1TorqueOutput = 0;
-      return {
-          'FrictionBrakeDemand': FrictionBrakeDemand,
-          'MG1TorqueOutput': MG1TorqueOutput
-      };
-      //done!
+      F_CAN.FrictionBrakeDemand = F_CAN.BrakeDemand;
+      F_CAN.MG1TorqueOutput = 0;
   } else {
       if (HVSOC >= 95) {
           //Battery too full to use regen
-          let FrictionBrakeDemand = BrakeDemand;
-          let MG1TorqueOutput = 0;
-          return {
-              'FrictionBrakeDemand': FrictionBrakeDemand,
-              'MG1TorqueOutput': MG1TorqueOutput
-          };
+          F_CAN.FrictionBrakeDemand = F_CAN.BrakeDemand;
+          F_CAN.MG1TorqueOutput = 0;
       } else {
           const RegenAvalibleTorque = RegenAvalibleTorquePoll();
-          if (BrakeDemand >= RegenAvalibleTorque) {
+          if (F_CAN.BrakeDemand >= RegenAvalibleTorque) {
               //Regen unable to meet demanded torque requested, use max regen, make up with auxiliary
-              let FrictionBrakeDemand = BrakeDemand - RegenAvalibleTorque;
-              let MG1TorqueOutput = RegenAvalibleTorque * -1;
-              return {
-                  'FrictionBrakeDemand': FrictionBrakeDemand,
-                  'MG1TorqueOutput': MG1TorqueOutput
-              };
+              F_CAN.FrictionBrakeDemand = F_CAN.BrakeDemand - RegenAvalibleTorque;
+              F_CAN.MG1TorqueOutput = RegenAvalibleTorque * -1;
           } else {
               //Regen only
-              let MG1TorqueOutput = BrakeDemand * -1;
-              let FrictionBrakeDemand = 0;
-              return {
-                  'FrictionBrakeDemand': FrictionBrakeDemand,
-                  'MG1TorqueOutput': MG1TorqueOutput
-              };
+              F_CAN.MG1TorqueOutput = F_CAN.BrakeDemand * -1;
+              F_CANFrictionBrakeDemand = 0;
           }
       }
   }
