@@ -41,7 +41,7 @@ function Main() {
   //get brake slider value
   const BrakePedal = document.getElementById("brakePedal").value;
   //get accelerator slider value
-  MainTorquePoll(document.getElementById("Accelerator"), F_CAN.Speed, F_CAN.EngineGeneration);
+  MainTorquePoll(document.getElementById("Accelerator"));
  
   // const timestamp = Date.now();
   //checks how long each step is so the program can compensate for execution speeds
@@ -66,6 +66,7 @@ function Main() {
         //operating mode in the event of a criticaly low battery
         F_CAN.LockUpClutch = 0;
         F_CAN.EngineGeneration = 76.8;
+        ECU();
       } else {
         //standard operating mode
       }
