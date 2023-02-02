@@ -145,7 +145,6 @@ function RegenAvalibleTorquePoll() {
 }
 
 //acceleration calculation
-
 function acelcalc() {
     //wheel torque to newtons
     const Newtons = F_CAN.WheelTorque / TireRadius;
@@ -156,4 +155,19 @@ function acelcalc() {
     //set the speed, and set speed to 0 if it is negative to prevent the program from shiting itself.
     F_CAN.Speed = Math.max(0, F_CAN.Speed + DeltaSpeed);
 }
-//engine ecu code here
+
+//engine ecu
+function ECU() {
+  //engine ECU
+  //the optimal BSFC curve (all power requests will be met using this thingy)
+  const EngineOperatingCurve = {
+    0: 0,
+    1: 0,
+    2: 0,
+  };
+  if (F_CAN.LockUpClutch === 1) {
+    F_CAN.EngineRPM = ____;
+  } else {
+    
+  };
+}
