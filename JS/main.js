@@ -45,7 +45,7 @@ setInterval(function(){Main(); }, 1000);
 function Main() {
   //grab some basic input
   //get brake slider value
-  const BrakePedal = document.getElementById("brakePedal");
+  const BrakePedal = document.getElementById("BrakePedal").value;
   //get accelerator slider value
   MainTorquePoll(document.getElementById("Accelerator").value);
   // const timestamp = Date.now();
@@ -53,6 +53,7 @@ function Main() {
   F_CAN.StepTime = Date.now() - lastTimestamp;
   lastTimestamp = Date.now();
   //prototype, prints to #header
+  DebugText("BrakeDemand:" + F_CAN.BrakeDemand, 0);
   DebugText("Accelerator:" + document.getElementById("Accelerator").value, 0);
   DebugText("TorqueDemand:" + F_CAN.TorqueDemand, 0);
   DebugText("MG1RPM:" + F_CAN.MG1RPM, 0);
@@ -133,6 +134,7 @@ function MainTorquePoll(AcceleratorRaw) {
     F_CAN.MG1Torque = 314;
   }
   F_CAN.TorqueDemand = F_CAN.MG1Torque * (AcceleratorRaw / 100);
+  RegenAvalibleTorquePoll();
 }
 
 //Lots of independent functions, will be combined into a more efficent blob at some point
@@ -152,7 +154,7 @@ function WheelTorquePoll() {
 //Regen Torque Calculation
 function RegenAvalibleTorquePoll() {
   //THIS IS ALSO A GODAWFUL BROKEN HACK I HOPE IT WORKS
-  return Math.max(0, F_CAN.MG1Torque - 350 / (F_CAN.MG1RPM / 500));
+  F_CAN.RegenAvalibleTorque = Math.max(0, F_CAN.MG1Torque - 350 / (F_CAN.MG1RPM / 500));
 }
 
 //acceleration calculation
@@ -189,16 +191,15 @@ function brakecontrol() {
       F_CAN.FrictionBrakeDemand = F_CAN.BrakeDemand;
       F_CAN.MG1TorqueOutput = 0;
   } else {
-      if (HVSOC >= 95) {
+      if (F_CAN.HVSOC >= 95) {
           //Battery too full to use regen
           F_CAN.FrictionBrakeDemand = F_CAN.BrakeDemand;
           F_CAN.MG1TorqueOutput = 0;
       } else {
-          const RegenAvalibleTorque = RegenAvalibleTorquePoll();
-          if (F_CAN.BrakeDemand >= RegenAvalibleTorque) {
+          if (F_CAN.BrakeDemand >= F_CAN.RegenAvalibleTorque) {
               //Regen unable to meet demanded torque requested, use max regen, make up with auxiliary
-              F_CAN.FrictionBrakeDemand = F_CAN.BrakeDemand - RegenAvalibleTorque;
-              F_CAN.MG1TorqueOutput = RegenAvalibleTorque * -1;
+              F_CAN.FrictionBrakeDemand = F_CAN.BrakeDemand - F_CAN.RegenAvalibleTorque;
+              F_CAN.MG1TorqueOutput = F_CAN.RegenAvalibleTorque * -1;
           } else {
               //Regen only
               F_CAN.MG1TorqueOutput = F_CAN.BrakeDemand * -1;
