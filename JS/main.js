@@ -5,6 +5,7 @@
 //uninitialized variables BE GONE!!!!! EVERYTHING THAT WILL EVER BE WILL ALWAYS BE SINCE ALWAYS, NEVER AGAIN WILL WE HAVE TO FEAR THE UNDEFINED VARIABLE!!!
 var F_CAN = {
   "Speed" : 0,
+  "WheelRPM" : 0,
   "MG1RPM" : 0,
   "TorqueDemand" : 0,
   "StepTime" : 0,
@@ -28,6 +29,10 @@ var DebugUItext = "";
 //powertrain variables
 F_CAN.Speed = 0;
 const BatteryMaxPowerDraw = 100000;
+const FinalDrive = 3.421;
+const MotorShaft = 2.454;
+const OverDrive = 0.806;
+//Motor to wheel gear ratio = 8.398:1
 //Timer variables
 let lastTimestamp = 0; 
 //misc variables
@@ -35,11 +40,11 @@ let lastTimestamp = 0;
 const TireRadius = 0.3429;
 const WeightKG = 1841;
 
-setInterval(function(){Main(); }, 100);
+setInterval(function(){Main(); }, 1000);
 function Main() {
   //grab some basic input
   //get brake slider value
-  const BrakePedal = document.getElementById("brakePedal").value;
+  const BrakePedal = document.getElementById("brakePedal");
   //get accelerator slider value
   MainTorquePoll(document.getElementById("Accelerator"));
  
@@ -53,7 +58,7 @@ function Main() {
   if(BrakePedal > 0){
     F_CAN.BrakeDemand = MaxBrakeTorque * (BrakePedal / 100);
     //call the whole brake handler thingy
-    const BrakeVars = brakecontrol(BrakeDemand, F_CAN.HVSOC, F_CAN.RegenAvalibleTorque);
+    const BrakeVars = brakecontrol();
     F_CAN.FrictionBrakeDemand = BrakeVars.FrictionBrakeDemand;
     F_CAN.MG1TorqueOutput = BrakeVars.MG1TorqueOutput;
   } else {
@@ -109,6 +114,7 @@ function EVMode() {
 function MainTorquePoll(AcceleratorRaw) {
   //MG1 RPM Calculation
   F_CAN.MG1RPM = F_CAN.Speed * 130;
+  F_CAN.WheelRPM = F_CAN.MG1RPM / (FinalDrive * MotorShaft);
   //MG1 Torque calculation
   //Calculate MG1 Torque limit
   //why the fuck did I have a seperate KW calculator again if this does the same thing?!
@@ -134,7 +140,7 @@ function WheelTorquePoll() {
   //Overall Toruqe output
   const CountershaftTorque = F_CAN.MG1TorqueOutput + F_CAN.EngineTorqueOutput;
   //Countershaft Torque to Wheel Torque
-  return Math.round(((CountershaftTorque + F_CAN.FrictionBrakeDemand * -1) * (FinalDrive * MotorCountershaft)) - Resistance);
+  return Math.round(((CountershaftTorque + F_CAN.FrictionBrakeDemand * -1) * (FinalDrive * MotorShaft)) - Resistance);
 }
 
 
@@ -168,7 +174,7 @@ function ECU() {
     2: 0,
   };
   if (F_CAN.LockUpClutch === 1) {
-    F_CAN.EngineRPM = ____;
+    F_CAN.EngineRPM = F_CAN.WheelRPM * (FinalDrive * OverDrive);
   } else {
     _
   };
