@@ -178,7 +178,7 @@ function ECU() {
     F_CAN.EngineRPM = F_CAN.WheelRPM * (FinalDrive * OverDrive);
   } else {
     _
-  };
+  }
 }
 
 function brakecontrol() {
