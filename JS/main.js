@@ -14,7 +14,7 @@ var F_CAN = {
   "MG1TorqueLimit" : 0,
   "MG1Torque" : 0,
   "RegenAvalibleTorque" : 0,
-  "HVSOC" : 0,
+  "HVSOC" : 100,
   "FrictionBrakeDemand" : 0,
   "BrakeDemand" : 0,
   "HVMode" : 0,
@@ -35,7 +35,7 @@ const MotorShaft = 2.454;
 const OverDrive = 0.806;
 //Motor to wheel gear ratio = 8.398:1
 //Timer variables
-let lastTimestamp = 0; 
+let lastTimestamp = Date.now();
 //misc variables
 //2.23694 is the number you use to convert KMH to MPH
 const TireRadius = 0.3429;
@@ -47,13 +47,15 @@ function Main() {
   //get brake slider value
   const BrakePedal = document.getElementById("brakePedal");
   //get accelerator slider value
-  MainTorquePoll(document.getElementById("Accelerator"));
- 
+  MainTorquePoll(document.getElementById("Accelerator").value);
   // const timestamp = Date.now();
   //checks how long each step is so the program can compensate for execution speeds
   F_CAN.StepTime = Date.now() - lastTimestamp;
   lastTimestamp = Date.now();
   //prototype, prints to #header
+  DebugText("Accelerator:" + document.getElementById("Accelerator").value, 0);
+  DebugText("TorqueDemand:" + F_CAN.TorqueDemand, 0);
+  DebugText("MG1RPM:" + F_CAN.MG1RPM, 0);
   DebugText("Steptime:" + F_CAN.StepTime, 1);
   //brake override function
   if(BrakePedal > 0){
