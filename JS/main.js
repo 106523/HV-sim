@@ -53,7 +53,7 @@ function Main() {
   F_CAN.StepTime = Date.now() - lastTimestamp;
   lastTimestamp = Date.now();
   //prototype, prints to #header
-  DebugText("BrakeDemand:" + F_CAN.BrakeDemand, 0);
+  DebugText("RegenAvalibleTorque:" + F_CAN.RegenAvalibleTorque, 0);
   DebugText("Accelerator:" + document.getElementById("Accelerator").value, 0);
   DebugText("TorqueDemand:" + F_CAN.TorqueDemand, 0);
   DebugText("MG1RPM:" + F_CAN.MG1RPM, 0);
@@ -68,6 +68,7 @@ function Main() {
   } else {
     //start deciding what to do to make the car go vroom!
     //make sure the car isnt fighting against the brakes
+    F_CAN.BrakeDemand = 0;
     F_CAN.FrictionBrakeDemand = 0;
     if (F_CAN.HVMode === 1) {
       //operating mode as a hybrid
@@ -203,7 +204,7 @@ function brakecontrol() {
           } else {
               //Regen only
               F_CAN.MG1TorqueOutput = F_CAN.BrakeDemand * -1;
-              F_CANFrictionBrakeDemand = 0;
+              F_CAN.FrictionBrakeDemand = 0;
           }
       }
   }
