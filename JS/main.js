@@ -29,6 +29,7 @@ var DebugUItext = "";
 //powertrain variables
 F_CAN.Speed = 0;
 const BatteryMaxPowerDraw = 100000;
+//Gearing
 const FinalDrive = 3.421;
 const MotorShaft = 2.454;
 const OverDrive = 0.806;
@@ -138,9 +139,9 @@ function WheelTorquePoll() {
   //call the rolling resistance calculator
   const Resistance = ResistanceCalc();
   //Overall Toruqe output
-  const CountershaftTorque = F_CAN.MG1TorqueOutput + F_CAN.EngineTorqueOutput;
+  const CountershaftTorque = (F_CAN.MG1TorqueOutput * MotorShaft) + (F_CAN.EngineTorqueOutput * OverDrive);
   //Countershaft Torque to Wheel Torque
-  return Math.round(((CountershaftTorque + F_CAN.FrictionBrakeDemand * -1) * (FinalDrive * MotorShaft)) - Resistance);
+  return Math.round(((CountershaftTorque + F_CAN.FrictionBrakeDemand * -1) * FinalDrive) - Resistance);
 }
 
 
