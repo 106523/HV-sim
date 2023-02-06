@@ -41,7 +41,10 @@ let lastTimestamp = Date.now();
 const TireRadius = 0.3429;
 const WeightKG = 1841;
 
-setInterval(function(){Main(); }, 1000);
+//setInterval(function(){Main(); }, 1000);
+setInterval(() => {
+  Main();
+}, 1);
 function Main() {
   //grab some basic input
   //get brake slider value
