@@ -13,6 +13,7 @@ var F_CAN = {
   "EngineTorqueOutput" : 0,
   "MG1TorqueLimit" : 0,
   "MG1Torque" : 0,
+  "MG1KW" : 0,
   "RegenAvalibleTorque" : 0,
   "HVSOC" : 100,
   "FrictionBrakeDemand" : 0,
@@ -22,6 +23,12 @@ var F_CAN = {
   "EngineGeneration" : 0,
   "EngineRPM" : 0,
   "WheelTorque" : 0,
+};
+//Engine optimal torque curve (followed in Hybrid Mode, targeted in Engine Drive Mode)
+const EngineOperatingCurve = {
+  0: 0,
+  1: 0,
+  2: 0,
 };
 //set max brake torque
 const MaxBrakeTorque = 1000;
@@ -177,15 +184,11 @@ function acelcalc() {
 function ECU() {
   //engine ECU
   //the optimal BSFC curve (all power requests will be met using this thingy)
-  const EngineOperatingCurve = {
-    0: 0,
-    1: 0,
-    2: 0,
-  };
   if (F_CAN.LockUpClutch === 1) {
     F_CAN.EngineRPM = F_CAN.WheelRPM * (FinalDrive * OverDrive);
+    //Engine will switch from global control to local control and use torque requests due to the fact that the engine is now directly coupled
   } else {
-    _
+    //Engine is operating on global controls and is being based purley on power requests
   }
 }
 
