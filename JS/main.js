@@ -159,8 +159,6 @@ function WheelTorquePoll() {
   return Math.round(((CountershaftTorque + F_CAN.FrictionBrakeDemand * -1) * FinalDrive) - Resistance);
 }
 
-
-
 //should be faster to keep the regen torque calculate subsystem seperate from the main MG1 torque calculator
 //Regen Torque Calculation
 function RegenAvalibleTorquePoll() {
