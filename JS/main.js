@@ -63,9 +63,10 @@ function Main() {
   F_CAN.StepTime = Date.now() - lastTimestamp;
   lastTimestamp = Date.now();
   //prototype, prints to #header
+  DebugText("BrakeDemand:" + F_CAN.BrakeDemand, 0);
   DebugText("RegenAvalibleTorque:" + F_CAN.RegenAvalibleTorque, 0);
-  DebugText("Accelerator:" + document.getElementById("Accelerator").value, 0);
-  DebugText("TorqueDemand:" + F_CAN.TorqueDemand, 0);
+  //DebugText("Accelerator:" + document.getElementById("Accelerator").value, 0);
+  // DebugText("TorqueDemand:" + F_CAN.TorqueDemand, 0);
   DebugText("MG1RPM:" + F_CAN.MG1RPM, 0);
   DebugText("Steptime:" + F_CAN.StepTime, 1);
   //brake override function
@@ -100,6 +101,7 @@ function Main() {
 }
 //prototype HTML text adder
 function DebugText(TextInput, Flush) {
+  //the /n part is broken
   DebugUItext = DebugUItext + ("\n" + TextInput);
   if (Flush === 1) {
     document.querySelector('#header').innerHTML = DebugUItext
