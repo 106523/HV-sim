@@ -1,0 +1,65 @@
+var _____WB$wombat$assign$function_____ = function(name) {return (self._wb_wombat && self._wb_wombat.local_init && self._wb_wombat.local_init(name)) || self[name]; };
+if (!self.__WB_pmw) { self.__WB_pmw = function(obj) { this.__WB_source = obj; return this; } }
+{
+  let window = _____WB$wombat$assign$function_____("window");
+  let self = _____WB$wombat$assign$function_____("self");
+  let document = _____WB$wombat$assign$function_____("document");
+  let location = _____WB$wombat$assign$function_____("location");
+  let top = _____WB$wombat$assign$function_____("top");
+  let parent = _____WB$wombat$assign$function_____("parent");
+  let frames = _____WB$wombat$assign$function_____("frames");
+  let opener = _____WB$wombat$assign$function_____("opener");
+
+function loadWidgets() {
+    if (typeof (DotNetNuke) === "undefined")
+        Type.registerNamespace("DotNetNuke.UI.WebControls");
+
+    if (typeof (DotNetNuke.UI.WebControls.Utility) === "undefined")
+        jQuery.getScript($dnn.baseResourcesUrl + "Shared/scripts/DotNetNukeAjaxShared.js",
+                    function() { jQuery.getScript($dnn.baseResourcesUrl + "Shared/scripts/widgets.js"); });
+    else
+        jQuery.getScript($dnn.baseResourcesUrl + "Shared/scripts/widgets.js");
+}
+
+if (typeof ($dnn) === "undefined") {
+    $dnn = new Object();
+    $dnn.pageScripts = document.getElementsByTagName("script");
+    $dnn.scriptUrl = $dnn.pageScripts[$dnn.pageScripts.length - 1].src;
+    $dnn.hostUrl = (typeof ($dnn.hostUrl) == "undefined" ? $dnn.scriptUrl.toLowerCase().replace("resources/shared/scripts/initwidgets.js", "") : $dnn.hostUrl);
+    if (!$dnn.hostUrl.endsWith("/")) $dnn.hostUrl += "/";
+    $dnn.baseDnnScriptUrl = $dnn.hostUrl + "Resources/Shared/scripts/";
+    $dnn.baseResourcesUrl = $dnn.hostUrl + "Resources/";
+}
+
+// jQuery dependency
+if (typeof (Sys) === "undefined")
+    jQuery.getScript($dnn.baseDnnScriptUrl + "MSAJAX/MicrosoftAjax.js", loadWidgets());
+else
+    loadWidgets();
+
+if (Sys && Sys.Application) {
+    Sys.Application.notifyScriptLoaded();
+}
+
+}
+/*
+     FILE ARCHIVED ON 22:30:46 Mar 24, 2016 AND RETRIEVED FROM THE
+     INTERNET ARCHIVE ON 20:14:46 Feb 07, 2023.
+     JAVASCRIPT APPENDED BY WAYBACK MACHINE, COPYRIGHT INTERNET ARCHIVE.
+
+     ALL OTHER CONTENT MAY ALSO BE PROTECTED BY COPYRIGHT (17 U.S.C.
+     SECTION 108(a)(3)).
+*/
+/*
+playback timings (ms):
+  captures_list: 116.986
+  exclusion.robots: 0.073
+  exclusion.robots.policy: 0.066
+  RedisCDXSource: 0.654
+  esindex: 0.01
+  LoadShardBlock: 99.093 (3)
+  PetaboxLoader3.datanode: 233.873 (5)
+  CDXLines.iter: 14.78 (3)
+  load_resource: 321.535 (2)
+  PetaboxLoader3.resolve: 125.543 (2)
+*/
