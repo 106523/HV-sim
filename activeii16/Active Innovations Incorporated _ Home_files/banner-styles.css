@@ -1,4 +1,3 @@
-@import 'record.css'; /* for SPN1 */
 
 #wm-ipp-base {
   height:65px;/* initial height just in case js code fails */
@@ -471,7 +470,6 @@ body.wm-modal #donato #donato-base {
     bottom: 0;
     z-index: 2147483640;
 }
-
 .wb-autocomplete-suggestions {
     font-family: Lucida Grande, Helvetica, Arial, sans-serif;
     font-size: 12px;
